@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ネット予約 - サワディーブロス</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafaf7; color: #1f2937; min-height: 100vh; padding-bottom: 80px; }
+
+header { background: #166534; color: white; padding: 16px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+header h1 { font-size: 17px; font-weight: 700; flex: 1; letter-spacing: 0.02em; }
+.brand-sub { font-size: 11px; opacity: 0.8; font-weight: 400; display: block; margin-top: 2px; }
+
+.steps-bar { display: flex; padding: 14px 20px 8px; background: white; border-bottom: 1px solid #e5e7eb; gap: 6px; font-size: 11px; }
+.step-pill { flex: 1; text-align: center; padding: 6px 4px; border-radius: 999px; background: #f3f4f6; color: #9ca3af; font-weight: 600; }
+.step-pill.active { background: #166534; color: white; }
+.step-pill.done { background: #d1fae5; color: #166534; }
+
+main { padding: 20px; max-width: 600px; margin: 0 auto; }
+.card { background: white; border-radius: 14px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid #e5e7eb; margin-bottom: 14px; }
+.card h2 { font-size: 15px; font-weight: 700; color: #166534; margin-bottom: 12px; }
+.card .desc { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+
+.date-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.date-cell { padding: 10px 6px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; text-align: center; cursor: pointer; transition: 0.15s; }
+.date-cell:hover { border-color: #166534; }
+.date-cell.selected { background: #166534; color: white; border-color: #166534; }
+.date-cell.closed { background: #f3f4f6; color: #d1d5db; cursor: not-allowed; }
+.date-cell.closed:hover { border-color: #e5e7eb; }
+.date-cell .day-of-week { font-size: 11px; font-weight: 600; }
+.date-cell .day { font-size: 18px; font-weight: 700; line-height: 1.2; }
+.date-cell .month { font-size: 10px; opacity: 0.7; }
+.date-cell.sun .day-of-week { color: #dc2626; }
+.date-cell.sat .day-of-week { color: #2563eb; }
+.date-cell.selected .day-of-week, .date-cell.closed .day-of-week { color: inherit !important; }
+
+.slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.slot-cell { padding: 12px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; cursor: pointer; transition: 0.15s; text-align: left; }
+.slot-cell:hover { border-color: #166534; }
+.slot-cell.selected { background: #166534; color: white; border-color: #166534; }
+.slot-cell.full { background: #fef2f2; color: #b91c1c; cursor: not-allowed; border-color: #fecaca; }
+.slot-cell.closed { background: #f9fafb; color: #d1d5db; cursor: not-allowed; }
+.slot-time { font-size: 16px; font-weight: 700; line-height: 1.2; }
+.slot-status { font-size: 11px; margin-top: 4px; opacity: 0.8; }
+
+.party-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.party-cell { padding: 12px 6px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; cursor: pointer; text-align: center; font-weight: 700; font-size: 16px; }
+.party-cell:hover { border-color: #166534; }
+.party-cell.selected { background: #166534; color: white; border-color: #166534; }
+
+.input-row { margin-bottom: 12px; }
+.input-row label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.input-row input, .input-row textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: white; font-size: 15px; font-family: inherit; }
+.input-row input:focus, .input-row textarea:focus { outline: none; border-color: #166534; }
+.input-row textarea { resize: vertical; min-height: 60px; }
+.input-row .req { color: #dc2626; font-weight: 700; margin-left: 2px; }
+
+.summary-row { display: flex; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+.summary-row:last-child { border-bottom: none; }
+.summary-label { color: #6b7280; width: 80px; flex-shrink: 0; }
+.summary-value { color: #1f2937; font-weight: 600; flex: 1; }
+
+.cta { width: 100%; padding: 16px; border: none; border-radius: 12px; background: #166534; color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
+.cta:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; }
+.cta.secondary { background: white; color: #166534; border: 1px solid #166534; margin-top: 8px; }
+
+.loading { text-align: center; padding: 60px 20px; color: #6b7280; font-size: 14px; }
+.error { padding: 14px 16px; background: #fef2f2; color: #991b1b; border-radius: 10px; border: 1px solid #fecaca; font-size: 13px; margin-bottom: 12px; }
+
+.success-card { text-align: center; padding: 32px 20px; background: white; border-radius: 14px; border: 1px solid #d1fae5; }
+.success-icon { font-size: 48px; margin-bottom: 8px; }
+.success-card h2 { font-size: 20px; color: #166534; margin-bottom: 8px; }
+.success-card .reservation-no { background: #f0fdf4; color: #166534; padding: 12px; border-radius: 10px; font-size: 18px; font-weight: 700; letter-spacing: 0.05em; margin: 16px 0; font-family: 'Menlo', monospace; }
+.success-card .note { font-size: 13px; color: #6b7280; line-height: 1.6; }
+
+.legal-note { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 16px; line-height: 1.5; padding: 0 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>サワディーブロス ネット予約</h1>
+    <span class="brand-sub">タイ料理レストラン・25席</span>
+  </div>
+</header>
+
+<div class="steps-bar" id="steps-bar">
+  <div class="step-pill active" data-step="1">日付</div>
+  <div class="step-pill" data-step="2">時刻</div>
+  <div class="step-pill" data-step="3">人数</div>
+  <div class="step-pill" data-step="4">連絡先</div>
+  <div class="step-pill" data-step="5">確認</div>
+</div>
+
+<main id="main">
+  <div id="loading" class="loading">読み込み中...</div>
+  <div id="content" style="display:none"></div>
+</main>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, push, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const FC = {
+  apiKey: 'AIzaSyBVfIZ_pUXqNAUljPBdsNlmVxkPEjvtUZQ',
+  authDomain: 'sawatdee-bros.firebaseapp.com',
+  databaseURL: 'https://sawatdee-bros-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'sawatdee-bros',
+  storageBucket: 'sawatdee-bros.firebasestorage.app',
+  messagingSenderId: '1026345346676',
+  appId: '1:1026345346676:web:98478c02d3dfbae3df310e'
+};
+const TENANT_ID = 'sawatdee-bros';
+const FB_BASE = FC.databaseURL;
+
+const app = initializeApp(FC);
+const db = getDatabase(app);
+
+// REST API（iOS Safari WebSocketゾンビ化対策）
+async function fbRestGet(path, timeoutMs) {
+  if (!timeoutMs) timeoutMs = 10000;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(FB_BASE + '/' + path + '.json', { signal: ctrl.signal, cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+
+// ---- 状態 ----
+let SETTINGS = null;
+let DAY_START_HOUR = 8; // POSのstore_config/day_start_hourを参照
+let step = 1;
+const sel = { date: null, slot: null, party: null, name: '', phone: '', note: '' };
+let dayBookings = {};   // {date: [{time_slot, status}, ...]}
+let confirmedNo = null;
+
+const $main = document.getElementById('content');
+const $loading = document.getElementById('loading');
+
+function setStep(n) {
+  step = n;
+  document.querySelectorAll('.step-pill').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.toggle('active', s === step);
+    el.classList.toggle('done', s < step);
+  });
+  render();
+}
+
+function fmtDateLabel(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function getNextDays(n) {
+  const out = [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  for (let i = 0; i < n; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    out.push(d);
+  }
+  return out;
+}
+
+function isClosed(dateStr) {
+  return SETTINGS.closed_dates && SETTINGS.closed_dates.indexOf(dateStr) !== -1;
+}
+
+function isSlotPastDeadline(dateStr, slot) {
+  // 当日かつ start時刻 - now < accept_until_minutes_before 分 → 受付不可
+  const now = new Date();
+  const [h, m] = slot.start.split(':').map(Number);
+  const start = new Date(dateStr + 'T' + slot.start + ':00');
+  const diffMin = (start.getTime() - now.getTime()) / 60000;
+  return diffMin < (SETTINGS.accept_until_minutes_before || 0);
+}
+
+function slotKey(slot) { return slot.start + '-' + slot.end; }
+
+function bookedCount(dateStr, slot) {
+  const list = dayBookings[dateStr] || [];
+  const k = slotKey(slot);
+  return list.filter(r => r.status !== 'cancelled' && r.time_slot === k).length;
+}
+
+// ---- 描画 ----
+function render() {
+  if (step === 1) renderStep1();
+  else if (step === 2) renderStep2();
+  else if (step === 3) renderStep3();
+  else if (step === 4) renderStep4();
+  else if (step === 5) renderStep5();
+  else if (step === 6) renderDone();
+  window.scrollTo(0, 0);
+}
+
+function renderStep1() {
+  const days = getNextDays(30);
+  let html = '<div class="card"><h2>📅 日付を選ぶ</h2><div class="desc">本日から30日先まで予約可能</div><div class="date-grid">';
+  days.forEach(d => {
+    const ds = fmtDateLabel(d);
+    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+    const closed = isClosed(ds);
+    const cls = ['date-cell'];
+    if (d.getDay() === 0) cls.push('sun');
+    if (d.getDay() === 6) cls.push('sat');
+    if (closed) cls.push('closed');
+    if (sel.date === ds) cls.push('selected');
+    html += '<div class="' + cls.join(' ') + '" data-d="' + ds + '" ' + (closed ? '' : 'data-pick="1"') + '>'
+      + '<div class="day-of-week">' + dow + '</div>'
+      + '<div class="day">' + d.getDate() + '</div>'
+      + '<div class="month">' + (d.getMonth()+1) + '月</div>'
+      + (closed ? '<div class="month" style="margin-top:4px">休業</div>' : '')
+      + '</div>';
+  });
+  html += '</div></div>';
+  $main.innerHTML = html;
+  $main.querySelectorAll('[data-pick]').forEach(el => {
+    el.addEventListener('click', async () => {
+      sel.date = el.dataset.d;
+      sel.slot = null;
+      await loadDayBookings(sel.date);
+      setStep(2);
+    });
+  });
+}
+
+async function loadDayBookings(dateStr) {
+  if (dayBookings[dateStr]) return;
+  $loading.style.display = 'block';
+  $main.style.display = 'none';
+  try {
+    const data = await fbRestGet('tenants/' + TENANT_ID + '/reservations/' + dateStr);
+    const list = [];
+    if (data) {
+      Object.keys(data).forEach(k => {
+        const r = data[k];
+        list.push({ time_slot: r.time_slot, status: r.status });
+      });
+    }
+    dayBookings[dateStr] = list;
+  } catch (e) {
+    dayBookings[dateStr] = [];
+  } finally {
+    $loading.style.display = 'none';
+    $main.style.display = 'block';
+  }
+}
+
+function renderStep2() {
+  const slots = SETTINGS.time_slots || [];
+  let html = '<div class="card"><h2>🕒 時刻を選ぶ</h2><div class="desc">'
+    + sel.date + ' のご来店時刻</div><div class="slot-grid">';
+  slots.forEach(s => {
+    const cap = s.capacity;
+    const used = bookedCount(sel.date, s);
+    const remain = cap - used;
+    const past = isSlotPastDeadline(sel.date, s);
+    const full = remain <= 0;
+    const cls = ['slot-cell'];
+    if (sel.slot && slotKey(sel.slot) === slotKey(s)) cls.push('selected');
+    if (full) cls.push('full');
+    if (past) cls.push('closed');
+    const disabled = full || past;
+    let status;
+    if (past) status = '受付終了';
+    else if (full) status = '満席';
+    else if (remain === 1) status = '残り1組';
+    else status = '空きあり';
+    html += '<div class="' + cls.join(' ') + '" ' + (disabled ? '' : 'data-pick="' + s.start + '|' + s.end + '|' + s.capacity + '"') + '>'
+      + '<div class="slot-time">' + s.start + ' – ' + s.end + '</div>'
+      + '<div class="slot-status">' + status + '</div>'
+      + '</div>';
+  });
+  html += '</div></div>';
+  html += '<button class="cta secondary" onclick="window.__back(1)">← 日付に戻る</button>';
+  $main.innerHTML = html;
+  $main.querySelectorAll('[data-pick]').forEach(el => {
+    el.addEventListener('click', () => {
+      const [start, end, capacity] = el.dataset.pick.split('|');
+      sel.slot = { start, end, capacity: parseInt(capacity) };
+      setStep(3);
+    });
+  });
+}
+
+function renderStep3() {
+  let html = '<div class="card"><h2>👥 人数</h2><div class="desc">合計人数を選択</div><div class="party-grid">';
+  for (let i = 1; i <= 10; i++) {
+    const cls = ['party-cell'];
+    if (sel.party === i) cls.push('selected');
+    html += '<div class="' + cls.join(' ') + '" data-p="' + i + '">' + i + '名</div>';
+  }
+  html += '</div></div>';
+  html += '<button class="cta secondary" onclick="window.__back(2)">← 時刻に戻る</button>';
+  $main.innerHTML = html;
+  $main.querySelectorAll('[data-p]').forEach(el => {
+    el.addEventListener('click', () => {
+      sel.party = parseInt(el.dataset.p);
+      setStep(4);
+    });
+  });
+}
+
+function renderStep4() {
+  let html = '<div class="card"><h2>📝 連絡先</h2>'
+    + '<div class="input-row"><label>お名前<span class="req">*</span></label>'
+    + '<input id="in-name" type="text" placeholder="山田 太郎" value="' + escAttr(sel.name) + '" autocomplete="name"></div>'
+    + '<div class="input-row"><label>電話番号<span class="req">*</span></label>'
+    + '<input id="in-phone" type="tel" placeholder="09012345678" value="' + escAttr(sel.phone) + '" autocomplete="tel" inputmode="tel"></div>'
+    + '<div class="input-row"><label>ご要望（任意）</label>'
+    + '<textarea id="in-note" placeholder="アレルギー・お祝い等">' + escHtml(sel.note) + '</textarea></div>'
+    + '<div id="form-error"></div>'
+    + '<button class="cta" onclick="window.__toConfirm()">確認画面へ →</button>'
+    + '</div>';
+  html += '<button class="cta secondary" onclick="window.__back(3)">← 人数に戻る</button>';
+  $main.innerHTML = html;
+}
+
+function renderStep5() {
+  let html = '<div class="card"><h2>✅ 内容確認</h2>'
+    + '<div class="summary-row"><div class="summary-label">日付</div><div class="summary-value">' + sel.date + '</div></div>'
+    + '<div class="summary-row"><div class="summary-label">時刻</div><div class="summary-value">' + sel.slot.start + ' – ' + sel.slot.end + '</div></div>'
+    + '<div class="summary-row"><div class="summary-label">人数</div><div class="summary-value">' + sel.party + '名</div></div>'
+    + '<div class="summary-row"><div class="summary-label">お名前</div><div class="summary-value">' + escHtml(sel.name) + '</div></div>'
+    + '<div class="summary-row"><div class="summary-label">電話</div><div class="summary-value">' + escHtml(sel.phone) + '</div></div>'
+    + (sel.note ? '<div class="summary-row"><div class="summary-label">要望</div><div class="summary-value">' + escHtml(sel.note) + '</div></div>' : '')
+    + '<div id="form-error" style="margin-top:12px"></div>'
+    + '<button class="cta" id="confirm-btn" style="margin-top:14px" onclick="window.__submit()">この内容で予約する</button>'
+    + '</div>'
+    + '<button class="cta secondary" onclick="window.__back(4)">← 連絡先に戻る</button>'
+    + '<div class="legal-note">予約確定後、お店から確認連絡が入る場合があります。<br>予約変更・キャンセルはお電話でお願いします。</div>';
+  $main.innerHTML = html;
+}
+
+function renderDone() {
+  const html = '<div class="success-card">'
+    + '<div class="success-icon">🎉</div>'
+    + '<h2>ご予約を承りました</h2>'
+    + '<div class="note">' + sel.date + ' ' + sel.slot.start + ' / ' + sel.party + '名様</div>'
+    + '<div class="reservation-no">予約番号: ' + confirmedNo + '</div>'
+    + '<div class="note">店舗からの確認連絡があるまで「仮予約」となります。<br>変更・キャンセルはお電話でご連絡ください。</div>'
+    + '</div>';
+  $main.innerHTML = html;
+  document.querySelectorAll('.step-pill').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.step-pill').forEach(el => el.classList.add('done'));
+}
+
+function escHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escAttr(s) { return escHtml(s); }
+
+window.__back = (n) => setStep(n);
+window.__toConfirm = () => {
+  const name = document.getElementById('in-name').value.trim();
+  const phone = document.getElementById('in-phone').value.trim();
+  const note = document.getElementById('in-note').value.trim();
+  const err = document.getElementById('form-error');
+  if (!name) { err.innerHTML = '<div class="error">お名前を入力してください</div>'; return; }
+  if (!phone || !/^[0-9\-+\s()]{8,}$/.test(phone)) { err.innerHTML = '<div class="error">電話番号を正しく入力してください</div>'; return; }
+  sel.name = name; sel.phone = phone; sel.note = note;
+  setStep(5);
+};
+
+window.__submit = async () => {
+  const btn = document.getElementById('confirm-btn');
+  const err = document.getElementById('form-error');
+  btn.disabled = true; btn.textContent = '送信中...';
+  try {
+    // 直前再チェック：満席/期限を再確認
+    await loadDayBookingsRefresh(sel.date);
+    if (isSlotPastDeadline(sel.date, sel.slot)) throw new Error('受付期限を過ぎました。別の時刻をお選びください。');
+    if (bookedCount(sel.date, sel.slot) >= sel.slot.capacity) throw new Error('この時刻はちょうど満席になりました。別の時刻をお選びください。');
+
+    const node = push(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + sel.date));
+    const id = node.key;
+    const payload = {
+      date: sel.date,
+      time_slot: slotKey(sel.slot),
+      party_size: sel.party,
+      name: sel.name,
+      phone: sel.phone,
+      note: sel.note || null,
+      status: 'pending',
+      created_at: Date.now()
+    };
+    Object.keys(payload).forEach(k => { if (payload[k] === null) delete payload[k]; });
+    await set(node, payload);
+    confirmedNo = id.slice(-6).toUpperCase();
+    setStep(6);
+  } catch (e) {
+    err.innerHTML = '<div class="error">' + escHtml(e.message) + '</div>';
+    btn.disabled = false; btn.textContent = 'この内容で予約する';
+  }
+};
+
+async function loadDayBookingsRefresh(dateStr) {
+  delete dayBookings[dateStr];
+  await loadDayBookings(dateStr);
+}
+
+(async function init() {
+  try {
+    const [settings, dayStart] = await Promise.all([
+      fbRestGet('tenants/' + TENANT_ID + '/reservation_settings'),
+      fbRestGet('store_config/day_start_hour')
+    ]);
+    if (!settings || !settings.time_slots) {
+      $loading.innerHTML = '<div class="error">予約受付の設定がまだ完了していません。<br>店舗にお電話でお問い合わせください。</div>';
+      return;
+    }
+    SETTINGS = settings;
+    if (typeof dayStart === 'number') DAY_START_HOUR = dayStart;
+    $loading.style.display = 'none';
+    $main.style.display = 'block';
+    setStep(1);
+  } catch (e) {
+    $loading.innerHTML = '<div class="error">読み込みに失敗しました。通信環境をご確認のうえ、再度アクセスしてください。<br><small>' + escHtml(e.message) + '</small></div>';
+  }
+})();
+</script>
+
+</body>
+</html>
