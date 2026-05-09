@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ネット予約 - サワディーブロス</title>
+<title>ネット予約 - サワディ兄弟</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafaf7; color: #1f2937; min-height: 100vh; padding-bottom: 80px; }
@@ -81,7 +81,7 @@ main { padding: 20px; max-width: 600px; margin: 0 auto; }
 
 <header>
   <div>
-    <h1>サワディーブロス ネット予約</h1>
+    <h1>サワディ兄弟 ネット予約</h1>
     <span class="brand-sub">タイ料理レストラン・25席</span>
   </div>
 </header>
@@ -168,7 +168,20 @@ function getNextDays(n) {
 }
 
 function isClosed(dateStr) {
-  return SETTINGS.closed_dates && SETTINGS.closed_dates.indexOf(dateStr) !== -1;
+  if (SETTINGS.closed_dates && SETTINGS.closed_dates.indexOf(dateStr) !== -1) return true;
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  if (SETTINGS.closed_dows && SETTINGS.closed_dows.indexOf(dow) !== -1) return true;
+  return false;
+}
+
+function getSlotsForDate(dateStr) {
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  if (SETTINGS.time_slots_by_dow) {
+    const arr = SETTINGS.time_slots_by_dow[String(dow)];
+    return Array.isArray(arr) ? arr : [];
+  }
+  // 旧スキーマ後方互換
+  return Array.isArray(SETTINGS.time_slots) ? SETTINGS.time_slots : [];
 }
 
 function isSlotPastDeadline(dateStr, slot) {
@@ -253,9 +266,16 @@ async function loadDayBookings(dateStr) {
 }
 
 function renderStep2() {
-  const slots = SETTINGS.time_slots || [];
+  const slots = getSlotsForDate(sel.date);
   let html = '<div class="card"><h2>🕒 時刻を選ぶ</h2><div class="desc">'
-    + sel.date + ' のご来店時刻</div><div class="slot-grid">';
+    + sel.date + ' のご来店時刻</div>';
+  if (slots.length === 0) {
+    html += '<div class="error">この日は予約枠が設定されていません。別の日をお選びください。</div></div>';
+    html += '<button class="cta secondary" onclick="window.__back(1)">← 日付に戻る</button>';
+    $main.innerHTML = html;
+    return;
+  }
+  html += '<div class="slot-grid">';
   slots.forEach(s => {
     const cap = s.capacity;
     const used = bookedCount(sel.date, s);
@@ -409,7 +429,9 @@ async function loadDayBookingsRefresh(dateStr) {
       fbRestGet('tenants/' + TENANT_ID + '/reservation_settings'),
       fbRestGet('store_config/day_start_hour')
     ]);
-    if (!settings || !settings.time_slots) {
+    const hasNew = settings && settings.time_slots_by_dow;
+    const hasLegacy = settings && Array.isArray(settings.time_slots);
+    if (!hasNew && !hasLegacy) {
       $loading.innerHTML = '<div class="error">予約受付の設定がまだ完了していません。<br>店舗にお電話でお問い合わせください。</div>';
       return;
     }

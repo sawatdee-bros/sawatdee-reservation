@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>予約設定 - サワディーブロス</title>
+<title>予約設定 - サワディ兄弟</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding-bottom: 60px; }
@@ -15,9 +15,10 @@ header h1 { font-size: 18px; font-weight: 600; color: #f1f5f9; flex: 1; }
 .save-btn:disabled { background: #334155; color: #64748b; cursor: default; }
 
 .loading { text-align: center; padding: 60px; color: #64748b; }
-.toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #166534; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; display: none; z-index: 200; white-space: nowrap; }
+.toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #166534; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; display: none; z-index: 200; white-space: nowrap; max-width: 90vw; }
 .toast.show { display: block; }
 .toast.error { background: #991b1b; }
+.toast.warn { background: #b45309; }
 
 .section { margin: 16px; }
 .section-title { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; padding: 0 4px; }
@@ -29,6 +30,26 @@ header h1 { font-size: 18px; font-weight: 600; color: #f1f5f9; flex: 1; }
 .field-input { background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; padding: 8px 12px; font-size: 14px; font-family: inherit; }
 .field-input:focus { outline: none; border-color: #166534; }
 
+.dow-tabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 10px 12px; border-bottom: 1px solid #334155; background: #0f172a; }
+.dow-tab { padding: 8px 4px; border: 1px solid #334155; border-radius: 8px; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; text-align: center; line-height: 1.3; }
+.dow-tab:hover { border-color: #475569; color: #cbd5e1; }
+.dow-tab.active { background: #166534; color: white; border-color: #166534; }
+.dow-tab .dow-label { font-weight: 700; font-size: 13px; }
+.dow-tab .dow-meta { display: block; font-size: 10px; opacity: 0.85; margin-top: 2px; }
+.dow-tab.closed { color: #64748b; }
+.dow-tab.closed .dow-meta { color: #94a3b8; }
+.dow-tab.active.closed { background: #475569; color: #f1f5f9; }
+.dow-tab.sun .dow-label { color: #f87171; }
+.dow-tab.sat .dow-label { color: #60a5fa; }
+.dow-tab.active .dow-label { color: white !important; }
+
+.dow-panel-header { display: flex; align-items: center; padding: 12px 16px; gap: 10px; border-bottom: 1px solid #334155; background: #1e293b; }
+.dow-panel-header .check-row { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.dow-panel-header input[type="checkbox"] { width: 16px; height: 16px; accent-color: #166534; cursor: pointer; }
+.dow-panel-header .check-label { font-size: 13px; color: #cbd5e1; }
+.dow-panel-header .copy-btn { margin-left: auto; padding: 6px 12px; background: transparent; border: 1px solid #334155; border-radius: 6px; color: #94a3b8; font-size: 12px; cursor: pointer; }
+.dow-panel-header .copy-btn:hover { border-color: #166534; color: #166534; }
+
 .slot-row { display: grid; grid-template-columns: 1fr 1fr 1fr 40px; gap: 8px; padding: 10px 16px; align-items: center; border-bottom: 1px solid #334155; }
 .slot-row:last-of-type { border-bottom: none; }
 .slot-head { display: grid; grid-template-columns: 1fr 1fr 1fr 40px; gap: 8px; padding: 8px 16px; font-size: 11px; color: #64748b; letter-spacing: 0.05em; }
@@ -38,6 +59,8 @@ header h1 { font-size: 18px; font-weight: 600; color: #f1f5f9; flex: 1; }
 .icon-btn:hover { border-color: #ef4444; color: #ef4444; }
 .add-btn { width: calc(100% - 32px); margin: 12px 16px; padding: 10px; border: 1px dashed #94a3b8; border-radius: 8px; background: transparent; color: #64748b; font-size: 13px; cursor: pointer; }
 .add-btn:hover { border-color: #166534; color: #166534; }
+
+.closed-day-msg { padding: 22px 16px; text-align: center; color: #94a3b8; font-size: 13px; }
 
 .closed-list { padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
 .closed-chip { background: #0f172a; border: 1px solid #334155; border-radius: 999px; padding: 6px 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
@@ -50,6 +73,8 @@ header h1 { font-size: 18px; font-weight: 600; color: #f1f5f9; flex: 1; }
 .add-closed-row button { padding: 8px 14px; background: #166534; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; }
 
 .note { padding: 12px 16px; font-size: 12px; color: #94a3b8; line-height: 1.5; background: #0f172a; border-top: 1px solid #334155; }
+
+.migrate-banner { margin: 12px 16px 0; padding: 10px 14px; background: #1e3a5f; border: 1px solid #3b82f6; border-radius: 10px; color: #dbeafe; font-size: 13px; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -66,27 +91,40 @@ header h1 { font-size: 18px; font-weight: 600; color: #f1f5f9; flex: 1; }
 
 <main id="main" style="display:none">
 
+  <div id="migrate-banner-slot"></div>
+
   <div class="section">
-    <div class="section-title">受付時間帯</div>
+    <div class="section-title">受付時間帯（曜日別）</div>
     <div class="card">
-      <div class="slot-head">
-        <div>開始</div><div>終了</div><div>最大組数</div><div></div>
+      <div class="dow-tabs" id="dow-tabs"></div>
+      <div class="dow-panel-header">
+        <label class="check-row">
+          <input type="checkbox" id="closed-dow-check">
+          <span class="check-label">この曜日を定休にする</span>
+        </label>
+        <button class="copy-btn" id="copy-btn" onclick="copyToOtherDays()">他の営業曜日にコピー</button>
       </div>
-      <div id="slots-container"></div>
-      <button class="add-btn" onclick="addSlot()">＋ 時間帯を追加</button>
-      <div class="note">枠ごとに「最大組数」を設定。客はこの時間帯から選択する。<br>営業日切替時刻はPOSの店舗設定（store_config/day_start_hour）に従う。</div>
+      <div id="slots-area">
+        <div class="slot-head">
+          <div>開始</div><div>終了</div><div>最大組数</div><div></div>
+        </div>
+        <div id="slots-container"></div>
+        <button class="add-btn" onclick="addSlot()">＋ 時間帯を追加</button>
+      </div>
+      <div id="closed-day-msg" class="closed-day-msg" style="display:none">この曜日は定休のため枠は無効です。<br>「この曜日を定休にする」のチェックを外すと編集可能になります。</div>
+      <div class="note">曜日別の予約枠を設定。客はこの時間帯から選択する。<br>営業日切替時刻はPOSの店舗設定（store_config/day_start_hour）に従う。</div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">休業日</div>
+    <div class="section-title">単発の休業日</div>
     <div class="card">
       <div id="closed-container" class="closed-list"></div>
       <div class="add-closed-row">
         <input id="closed-date-input" class="field-input" type="date" style="flex:1">
         <button onclick="addClosedDate()">追加</button>
       </div>
-      <div class="note">指定日は予約を受け付けない。</div>
+      <div class="note">定休曜日に加えて、臨時休業の特定日を指定。<br>「曜日が定休」または「この単発リストに該当」のいずれかで休業判定。</div>
     </div>
   </div>
 
@@ -125,34 +163,125 @@ const SETTINGS_PATH = 'tenants/' + TENANT_ID + '/reservation_settings';
 const app = initializeApp(FC);
 const db = getDatabase(app);
 
+const DOWS = [
+  { key: 0, label: '日', cls: 'sun' },
+  { key: 1, label: '月', cls: '' },
+  { key: 2, label: '火', cls: '' },
+  { key: 3, label: '水', cls: '' },
+  { key: 4, label: '木', cls: '' },
+  { key: 5, label: '金', cls: '' },
+  { key: 6, label: '土', cls: 'sat' }
+];
+
+// サワディ兄弟のデフォルト：月火定休・水木金土17:30-20:30・日14:00-20:30
+function makeSlotSeq(startH, startM, endH, endM, capacity, stepMin) {
+  const out = [];
+  let t = startH * 60 + startM;
+  const end = endH * 60 + endM;
+  while (t + stepMin <= end) {
+    const a = t, b = t + stepMin;
+    out.push({
+      start: hhmm(a),
+      end: hhmm(b),
+      capacity: capacity
+    });
+    t = b;
+  }
+  return out;
+}
+function hhmm(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+const DEFAULT_EVENING = makeSlotSeq(17, 30, 20, 30, 4, 30);
+const DEFAULT_SUNDAY = makeSlotSeq(14, 0, 20, 30, 4, 30);
 const DEFAULTS = {
-  time_slots: [
-    { start: '17:00', end: '17:30', capacity: 4 },
-    { start: '17:30', end: '18:00', capacity: 4 },
-    { start: '18:00', end: '18:30', capacity: 4 },
-    { start: '18:30', end: '19:00', capacity: 4 },
-    { start: '19:00', end: '19:30', capacity: 4 },
-    { start: '19:30', end: '20:00', capacity: 4 },
-    { start: '20:00', end: '20:30', capacity: 4 }
-  ],
+  time_slots_by_dow: {
+    '0': DEFAULT_SUNDAY,    // 日
+    '1': [],                // 月（定休）
+    '2': [],                // 火（定休）
+    '3': DEFAULT_EVENING,   // 水
+    '4': DEFAULT_EVENING,   // 木
+    '5': DEFAULT_EVENING,   // 金
+    '6': DEFAULT_EVENING    // 土
+  },
+  closed_dows: [1, 2],
   closed_dates: [],
   accept_until_minutes_before: 60
 };
 
-let state = { time_slots: [], closed_dates: [], accept_until_minutes_before: 60 };
+let state = {
+  time_slots_by_dow: { '0':[], '1':[], '2':[], '3':[], '4':[], '5':[], '6':[] },
+  closed_dows: [],
+  closed_dates: [],
+  accept_until_minutes_before: 60
+};
+let currentDow = 3; // 水曜デフォルト表示
+let migratedFromLegacy = false;
 
-function showToast(msg, isError) {
+function showToast(msg, kind) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.classList.toggle('error', !!isError);
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  t.className = 'toast' + (kind ? ' ' + kind : '') + ' show';
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function isClosedDow(dow) {
+  return state.closed_dows.indexOf(dow) !== -1;
+}
+
+function setDowClosed(dow, closed) {
+  if (closed) {
+    if (!isClosedDow(dow)) state.closed_dows.push(dow);
+    state.time_slots_by_dow[String(dow)] = [];
+  } else {
+    state.closed_dows = state.closed_dows.filter(d => d !== dow);
+    if (!state.time_slots_by_dow[String(dow)] || state.time_slots_by_dow[String(dow)].length === 0) {
+      // 営業に戻したら、デフォルトテンプレを投入（日曜だけ早め開始）
+      state.time_slots_by_dow[String(dow)] = JSON.parse(JSON.stringify(dow === 0 ? DEFAULT_SUNDAY : DEFAULT_EVENING));
+    }
+  }
+}
+
+function renderTabs() {
+  const c = document.getElementById('dow-tabs');
+  c.innerHTML = '';
+  DOWS.forEach(d => {
+    const closed = isClosedDow(d.key);
+    const slots = state.time_slots_by_dow[String(d.key)] || [];
+    const cls = ['dow-tab'];
+    if (d.cls) cls.push(d.cls);
+    if (currentDow === d.key) cls.push('active');
+    if (closed) cls.push('closed');
+    const meta = closed ? '定休' : (slots.length + '枠');
+    const btn = document.createElement('button');
+    btn.className = cls.join(' ');
+    btn.dataset.dow = d.key;
+    btn.innerHTML = '<span class="dow-label">' + d.label + '</span><span class="dow-meta">' + meta + '</span>';
+    btn.addEventListener('click', () => {
+      currentDow = d.key;
+      renderTabs();
+      renderDowPanel();
+    });
+    c.appendChild(btn);
+  });
+}
+
+function renderDowPanel() {
+  const closed = isClosedDow(currentDow);
+  document.getElementById('closed-dow-check').checked = closed;
+  document.getElementById('slots-area').style.display = closed ? 'none' : 'block';
+  document.getElementById('closed-day-msg').style.display = closed ? 'block' : 'none';
+  document.getElementById('copy-btn').style.display = closed ? 'none' : 'inline-block';
+  if (!closed) renderSlots();
 }
 
 function renderSlots() {
+  const slots = state.time_slots_by_dow[String(currentDow)] || [];
   const c = document.getElementById('slots-container');
   c.innerHTML = '';
-  state.time_slots.forEach((slot, i) => {
+  slots.forEach((slot, i) => {
     const row = document.createElement('div');
     row.className = 'slot-row';
     row.innerHTML =
@@ -168,38 +297,70 @@ function renderSlots() {
       const k = e.target.dataset.k;
       let v = e.target.value;
       if (k === 'capacity') v = Math.max(1, parseInt(v) || 1);
-      state.time_slots[i][k] = v;
+      state.time_slots_by_dow[String(currentDow)][i][k] = v;
+      renderTabs(); // 件数バッジ更新
     });
   });
   c.querySelectorAll('button[data-rm]').forEach(btn => {
     btn.addEventListener('click', e => {
       const i = parseInt(e.target.dataset.rm);
-      state.time_slots.splice(i, 1);
+      state.time_slots_by_dow[String(currentDow)].splice(i, 1);
       renderSlots();
+      renderTabs();
     });
   });
 }
 
 window.addSlot = function() {
-  const last = state.time_slots[state.time_slots.length - 1];
-  const start = last ? last.end : '17:00';
+  const arr = state.time_slots_by_dow[String(currentDow)];
+  const last = arr[arr.length - 1];
+  const start = last ? last.end : (currentDow === 0 ? '14:00' : '17:30');
   const cap = last ? last.capacity : 4;
-  state.time_slots.push({ start, end: bumpHalfHour(start), capacity: cap });
+  arr.push({ start, end: bumpHalfHour(start), capacity: cap });
   renderSlots();
+  renderTabs();
 };
 
-function bumpHalfHour(hhmm) {
-  const [h, m] = hhmm.split(':').map(Number);
+function bumpHalfHour(hhmm_) {
+  const [h, m] = hhmm_.split(':').map(Number);
   const total = h * 60 + m + 30;
   const nh = Math.min(23, Math.floor(total / 60));
   const nm = total % 60;
   return String(nh).padStart(2, '0') + ':' + String(nm).padStart(2, '0');
 }
 
+window.copyToOtherDays = function() {
+  const src = state.time_slots_by_dow[String(currentDow)];
+  if (!src || src.length === 0) {
+    showToast('コピー元の枠がありません', 'warn');
+    return;
+  }
+  const targets = DOWS.filter(d => d.key !== currentDow && !isClosedDow(d.key)).map(d => d.label);
+  if (targets.length === 0) {
+    showToast('コピー先の営業曜日がありません', 'warn');
+    return;
+  }
+  if (!confirm('現在の曜日設定を ' + targets.join('・') + ' にコピーします。\n（既存の枠は上書きされます）'))
+    return;
+  DOWS.forEach(d => {
+    if (d.key !== currentDow && !isClosedDow(d.key)) {
+      state.time_slots_by_dow[String(d.key)] = JSON.parse(JSON.stringify(src));
+    }
+  });
+  renderTabs();
+  showToast('✓ コピーしました');
+};
+
+document.getElementById('closed-dow-check').addEventListener('change', e => {
+  setDowClosed(currentDow, e.target.checked);
+  renderTabs();
+  renderDowPanel();
+});
+
 function renderClosedDates() {
   const c = document.getElementById('closed-container');
   if (state.closed_dates.length === 0) {
-    c.innerHTML = '<div class="empty">休業日は登録されていません</div>';
+    c.innerHTML = '<div class="empty">単発の休業日は登録されていません</div>';
     return;
   }
   c.innerHTML = '';
@@ -234,34 +395,84 @@ window.saveAll = async function() {
   btn.disabled = true;
   try {
     state.accept_until_minutes_before = Math.max(0, parseInt(document.getElementById('accept-minutes').value) || 0);
-    state.time_slots.forEach(s => {
-      if (!/^\d{2}:\d{2}$/.test(s.start)) throw new Error('時刻形式が不正です: ' + s.start);
-      if (!/^\d{2}:\d{2}$/.test(s.end)) throw new Error('時刻形式が不正です: ' + s.end);
-      if (s.end <= s.start) throw new Error('終了は開始より後に: ' + s.start + '-' + s.end);
-      if (!(s.capacity >= 1)) throw new Error('最大組数は1以上');
+    DOWS.forEach(d => {
+      const k = String(d.key);
+      const arr = state.time_slots_by_dow[k] || [];
+      if (isClosedDow(d.key)) {
+        state.time_slots_by_dow[k] = []; // 念のため
+        return;
+      }
+      arr.forEach(s => {
+        if (!/^\d{2}:\d{2}$/.test(s.start)) throw new Error(d.label + '曜: 時刻形式が不正 ' + s.start);
+        if (!/^\d{2}:\d{2}$/.test(s.end)) throw new Error(d.label + '曜: 時刻形式が不正 ' + s.end);
+        if (s.end <= s.start) throw new Error(d.label + '曜: 終了は開始より後に ' + s.start + '-' + s.end);
+        if (!(s.capacity >= 1)) throw new Error(d.label + '曜: 最大組数は1以上');
+      });
     });
-    await set(ref(db, SETTINGS_PATH), state);
+    state.closed_dows.sort((a, b) => a - b);
+    // 旧スキーマ time_slots は明示的に削除（マイグレ済の証跡）
+    const payload = {
+      time_slots_by_dow: state.time_slots_by_dow,
+      closed_dows: state.closed_dows,
+      closed_dates: state.closed_dates,
+      accept_until_minutes_before: state.accept_until_minutes_before
+    };
+    await set(ref(db, SETTINGS_PATH), payload);
+    if (migratedFromLegacy) {
+      document.getElementById('migrate-banner-slot').innerHTML = '';
+      migratedFromLegacy = false;
+    }
     showToast('✓ 保存しました');
   } catch (e) {
-    showToast('保存失敗: ' + e.message, true);
+    showToast('保存失敗: ' + e.message, 'error');
   } finally {
     btn.disabled = false;
   }
 };
 
+function migrateIfLegacy(cfg) {
+  // 旧 time_slots フィールドのみが存在する場合の自動マイグレーション
+  if (cfg && cfg.time_slots && !cfg.time_slots_by_dow) {
+    const legacy = Array.isArray(cfg.time_slots) ? cfg.time_slots : [];
+    const closed = Array.isArray(cfg.closed_dows) ? cfg.closed_dows : [];
+    const byDow = { '0':[], '1':[], '2':[], '3':[], '4':[], '5':[], '6':[] };
+    DOWS.forEach(d => {
+      if (closed.indexOf(d.key) === -1) {
+        byDow[String(d.key)] = JSON.parse(JSON.stringify(legacy));
+      }
+    });
+    cfg.time_slots_by_dow = byDow;
+    migratedFromLegacy = true;
+    document.getElementById('migrate-banner-slot').innerHTML =
+      '<div class="migrate-banner">📌 旧スキーマ（曜日共通の time_slots）を検出。各営業曜日に同じ枠をコピーして読み込みました。<br>各曜日を確認して「保存する」を押してください。</div>';
+  }
+  return cfg;
+}
+
 (async function init() {
   try {
     const snap = await get(ref(db, SETTINGS_PATH));
-    const cfg = snap.val();
-    if (cfg && cfg.time_slots) {
-      state.time_slots = Array.isArray(cfg.time_slots) ? cfg.time_slots : [];
-      state.closed_dates = Array.isArray(cfg.closed_dates) ? cfg.closed_dates : [];
+    let cfg = snap.val();
+    if (cfg) {
+      cfg = migrateIfLegacy(cfg);
+      const byDow = cfg.time_slots_by_dow || {};
+      const merged = { '0':[], '1':[], '2':[], '3':[], '4':[], '5':[], '6':[] };
+      DOWS.forEach(d => {
+        merged[String(d.key)] = Array.isArray(byDow[String(d.key)]) ? byDow[String(d.key)] : [];
+      });
+      state.time_slots_by_dow = merged;
+      state.closed_dows = Array.isArray(cfg.closed_dows) ? cfg.closed_dows.slice() : [];
+      state.closed_dates = Array.isArray(cfg.closed_dates) ? cfg.closed_dates.slice() : [];
       state.accept_until_minutes_before = typeof cfg.accept_until_minutes_before === 'number' ? cfg.accept_until_minutes_before : 60;
     } else {
       state = JSON.parse(JSON.stringify(DEFAULTS));
     }
     document.getElementById('accept-minutes').value = state.accept_until_minutes_before;
-    renderSlots();
+    // 初期表示曜日：定休でない最初の曜日を選ぶ
+    const firstOpen = DOWS.find(d => !isClosedDow(d.key));
+    if (firstOpen) currentDow = firstOpen.key;
+    renderTabs();
+    renderDowPanel();
     renderClosedDates();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('main').style.display = 'block';
