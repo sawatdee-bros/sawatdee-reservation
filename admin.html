@@ -65,6 +65,10 @@ main { padding: 14px 16px; max-width: 760px; margin: 0 auto; }
 
 .r-id { position: absolute; top: 10px; right: 12px; font-family: 'Menlo', monospace; font-size: 10px; color: #64748b; }
 
+.mail-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; vertical-align: middle; margin-left: 6px; }
+.mail-badge.sent { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+.mail-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
 .empty-state { text-align: center; padding: 60px 20px; color: #64748b; font-size: 13px; }
 .loading { text-align: center; padding: 60px 20px; color: #64748b; }
 .error-msg { background: #7f1d1d; color: #fecaca; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
@@ -100,7 +104,7 @@ main { padding: 14px 16px; max-width: 760px; margin: 0 auto; }
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, update, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 const FC = {
   apiKey: 'AIzaSyBVfIZ_pUXqNAUljPBdsNlmVxkPEjvtUZQ',
@@ -128,6 +132,7 @@ const STATUS_LABELS = { pending: '受付待ち', confirmed: '確定', cancelled:
 let currentDate = todayStr();
 let currentFilter = 'all';
 let bookings = []; // [{id, ...payload}]
+let SETTINGS = {}; // reservation_settings（email_endpoint等の参照に使用）
 
 function todayStr() {
   const d = new Date();
@@ -142,6 +147,31 @@ function showToast(msg, ok) {
 }
 
 function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function fmtClockShort(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+function mailStatusBadge(b) {
+  if (b.email_sent_at) {
+    return ' <span class="mail-badge sent">✉ 送信済 ' + fmtClockShort(b.email_sent_at) + '</span>';
+  }
+  if (b.status === 'confirmed' && b.email) {
+    return ' <span class="mail-badge pending">✉ 未送信</span>';
+  }
+  return '';
+}
+
+async function loadSettings() {
+  try {
+    const snap = await get(ref(db, 'tenants/' + TENANT_ID + '/reservation_settings'));
+    SETTINGS = snap.val() || {};
+  } catch (e) {
+    SETTINGS = {};
+  }
+}
 
 async function loadDate(dateStr) {
   document.getElementById('content').className = 'loading';
@@ -219,6 +249,7 @@ function renderCard(b) {
   const status = b.status || 'pending';
   const phone = b.phone || '';
   const phoneHref = phone ? phone.replace(/[^0-9+]/g, '') : '';
+  const email = b.email || '';
   const idShort = (b.id || '').slice(-6).toUpperCase();
   let actions = '';
   if (status === 'pending') {
@@ -226,9 +257,12 @@ function renderCard(b) {
       '<button class="act-btn confirm" data-act="confirm" data-id="' + b.id + '">確定</button>'
       + '<button class="act-btn cancel" data-act="cancel" data-id="' + b.id + '">キャンセル</button>';
   } else if (status === 'confirmed') {
-    actions =
-      '<button class="act-btn noshow" data-act="no_show" data-id="' + b.id + '">来店なし</button>'
-      + '<button class="act-btn" data-act="revert_pending" data-id="' + b.id + '">受付待ちに戻す</button>'
+    actions = '<button class="act-btn noshow" data-act="no_show" data-id="' + b.id + '">来店なし</button>';
+    if (email) {
+      actions += '<button class="act-btn" data-act="resend_email" data-id="' + b.id + '" title="メール再送信">✉ 再送</button>';
+    }
+    actions +=
+      '<button class="act-btn" data-act="revert_pending" data-id="' + b.id + '">受付待ちに戻す</button>'
       + '<button class="act-btn cancel" data-act="cancel" data-id="' + b.id + '">キャンセル</button>';
   } else if (status === 'cancelled' || status === 'no_show') {
     actions = '<button class="act-btn" data-act="revert_pending" data-id="' + b.id + '">受付待ちに戻す</button>';
@@ -244,6 +278,7 @@ function renderCard(b) {
     + '<dl class="r-info">'
     + '<dt>お名前</dt><dd>' + escHtml(b.name || '') + '</dd>'
     + '<dt>電話</dt><dd>' + (phone ? '<a href="tel:' + escHtml(phoneHref) + '">' + escHtml(phone) + '</a>' : '—') + '</dd>'
+    + '<dt>メール</dt><dd>' + (email ? '<a href="mailto:' + escHtml(email) + '">' + escHtml(email) + '</a>' + mailStatusBadge(b) : '—') + '</dd>'
     + (b.note ? '<dt>要望</dt><dd class="note">' + escHtml(b.note) + '</dd>' : '')
     + '</dl>'
     + '<div class="r-actions">' + actions + '</div>'
@@ -253,32 +288,112 @@ function renderCard(b) {
 async function handleAction(id, act) {
   const target = bookings.find(b => b.id === id);
   if (!target) return;
+
+  if (act === 'resend_email') {
+    if (!confirm('このお客様にメールを再送信しますか？')) return;
+    await sendConfirmationMail(target, { isResend: true });
+    return;
+  }
+
   let updates = {};
-  let nextStatus = null;
   let confirmMsg = null;
   if (act === 'confirm') {
-    nextStatus = 'confirmed';
     updates = { status: 'confirmed', confirmed_at: Date.now() };
   } else if (act === 'cancel') {
-    nextStatus = 'cancelled';
     confirmMsg = 'この予約をキャンセル扱いにします。よろしいですか？';
     updates = { status: 'cancelled', cancelled_at: Date.now() };
   } else if (act === 'no_show') {
-    nextStatus = 'no_show';
     confirmMsg = '来店なし（no-show）として記録します。よろしいですか？';
     updates = { status: 'no_show', no_show_at: Date.now() };
   } else if (act === 'revert_pending') {
-    nextStatus = 'pending';
     updates = { status: 'pending' };
   }
   if (confirmMsg && !confirm(confirmMsg)) return;
   try {
+    // 順序：先に Firebase ステータス更新を完了 → 確定の場合のみ後段でメール送信
+    // メール送信失敗はステータス確定をブロックしない（director指針）
     await update(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + currentDate + '/' + id), updates);
     Object.assign(target, updates);
     render();
     showToast('✓ 更新しました', true);
   } catch (e) {
     showToast('更新失敗: ' + e.message, false);
+    return;
+  }
+
+  // 確定操作で初回のみメール送信（email_sent_at が未記録の予約のみ）
+  if (act === 'confirm' && !target.email_sent_at) {
+    await sendConfirmationMail(target, { isResend: false });
+  }
+}
+
+async function sendConfirmationMail(target, opts) {
+  const isResend = opts && opts.isResend;
+  if (!target.email) {
+    if (isResend) showToast('メールアドレスが登録されていません', false);
+    else showToast('（メアド未登録のため送信なし）', true);
+    return;
+  }
+  const endpoint = (SETTINGS && SETTINGS.email_endpoint) || '';
+  if (!endpoint) {
+    if (isResend) showToast('settings.html でGAS Web App URLを設定してください', false);
+    else showToast('（メール送信エンドポイント未設定）', true);
+    return;
+  }
+
+  const id = target.id;
+  const reservationNo = id.slice(-6).toUpperCase();
+  const body = JSON.stringify({
+    tenant_id: TENANT_ID,
+    reservation_id: id,
+    date: target.date,
+    time_slot: target.time_slot,
+    party_size: target.party_size,
+    email: target.email,
+    name: target.name,
+    reservation_no: reservationNo
+  });
+
+  let result = null;
+  let errorText = '';
+  try {
+    // GAS Web App は CORS preflight 非対応のため、Content-Type 指定なしで送る
+    // （ブラウザが自動で text/plain;charset=UTF-8 相当を付与・preflightスキップ）
+    const res = await fetch(endpoint, { method: 'POST', body: body, redirect: 'follow' });
+    if (!res.ok) {
+      errorText = 'http_' + res.status;
+    } else {
+      const text = await res.text();
+      try { result = JSON.parse(text); }
+      catch (e) { errorText = 'invalid_response'; }
+    }
+  } catch (e) {
+    errorText = 'fetch_failed:' + (e && e.message ? e.message : String(e));
+  }
+
+  const sentAt = Date.now();
+  const ok = !!(result && result.ok);
+  if (!ok && !errorText) errorText = (result && result.error) ? String(result.error) : 'unknown';
+
+  // email_log に成否記録（director指針：admin で「失敗」表示の根拠）
+  try {
+    await set(ref(db, 'tenants/' + TENANT_ID + '/email_log/' + target.date + '/' + id), {
+      sent_at: sentAt,
+      status: ok ? 'sent' : 'failed',
+      error: ok ? null : errorText.slice(0, 200)
+    });
+  } catch (_) { /* ログ書き込み失敗は致命でないので握る */ }
+
+  if (ok) {
+    try {
+      await update(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + target.date + '/' + id), { email_sent_at: sentAt });
+      target.email_sent_at = sentAt;
+    } catch (_) { /* */ }
+    render();
+    showToast(isResend ? '✉ メール再送信完了' : '✉ メール送信完了', true);
+  } else {
+    render();
+    showToast('メール送信失敗：手動連絡してください（' + errorText + '）', false);
   }
 }
 
@@ -303,7 +418,7 @@ document.getElementById('date-input').addEventListener('change', e => {
 });
 
 document.getElementById('date-input').value = currentDate;
-loadDate(currentDate);
+(async () => { await loadSettings(); loadDate(currentDate); })();
 </script>
 
 </body>

@@ -142,6 +142,48 @@ header h1 { font-size: 18px; font-weight: 600; color: #f1f5f9; flex: 1; }
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-title">店舗情報（メール本文に使用）</div>
+    <div class="card">
+      <div class="field-row">
+        <div class="field-label">
+          電話番号
+          <div class="field-sub">承認メールの末尾に表示</div>
+        </div>
+        <input id="store-phone" class="field-input" type="tel" placeholder="044-777-6759" style="width:180px">
+      </div>
+      <div class="field-row">
+        <div class="field-label">
+          住所
+          <div class="field-sub">承認メールの末尾に表示</div>
+        </div>
+        <input id="store-address" class="field-input" type="text" placeholder="神奈川県川崎市中原区上小田中5-3-10" style="flex:1;min-width:0">
+      </div>
+      <div class="field-row">
+        <div class="field-label">
+          返信用メールアドレス
+          <div class="field-sub">任意。指定するとメール返信先に設定（未指定なら無し）</div>
+        </div>
+        <input id="store-reply-email" class="field-input" type="email" placeholder="（任意）" style="width:240px">
+      </div>
+      <div class="note">店名はPOSの <code>store_config/store_name</code> から取得（重複登録回避のためここでは持たない）。</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">予約確定メール（GAS Web App）</div>
+    <div class="card">
+      <div class="field-row" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div class="field-label">
+          Apps Script Web App URL
+          <div class="field-sub">予約確定時にメール送信するためのGAS Web App URL。空欄ならメール送信は無効。</div>
+        </div>
+        <input id="email-endpoint" class="field-input" type="url" placeholder="https://script.google.com/macros/s/AKfyc...../exec" style="width:100%">
+      </div>
+      <div class="note">設定方法は <code>apps_script/reservation_mail.gs</code> をGASに貼り付けてWeb App公開→URLをここに登録。<br>再デプロイ時は必ず「デプロイを管理 → 既存デプロイ編集」を選んでください（URL変更を防ぐため）。</div>
+    </div>
+  </div>
+
 </main>
 
 <script type="module">
@@ -208,14 +250,18 @@ const DEFAULTS = {
   },
   closed_dows: [1, 2],
   closed_dates: [],
-  accept_until_minutes_before: 60
+  accept_until_minutes_before: 60,
+  store_info: { phone: '044-777-6759', address: '神奈川県川崎市中原区上小田中5-3-10' },
+  email_endpoint: ''
 };
 
 let state = {
   time_slots_by_dow: { '0':[], '1':[], '2':[], '3':[], '4':[], '5':[], '6':[] },
   closed_dows: [],
   closed_dates: [],
-  accept_until_minutes_before: 60
+  accept_until_minutes_before: 60,
+  store_info: { phone: '', address: '', reply_email: '' },
+  email_endpoint: ''
 };
 let currentDow = 3; // 水曜デフォルト表示
 let migratedFromLegacy = false;
@@ -395,6 +441,19 @@ window.saveAll = async function() {
   btn.disabled = true;
   try {
     state.accept_until_minutes_before = Math.max(0, parseInt(document.getElementById('accept-minutes').value) || 0);
+    state.store_info = {
+      phone: (document.getElementById('store-phone').value || '').trim(),
+      address: (document.getElementById('store-address').value || '').trim(),
+      reply_email: (document.getElementById('store-reply-email').value || '').trim()
+    };
+    Object.keys(state.store_info).forEach(k => { if (!state.store_info[k]) delete state.store_info[k]; });
+    state.email_endpoint = (document.getElementById('email-endpoint').value || '').trim();
+    if (state.email_endpoint && !/^https:\/\/script\.google\.com\//.test(state.email_endpoint)) {
+      throw new Error('GAS Web App URL の形式が不正（https://script.google.com/ で始まる必要あり）');
+    }
+    if (state.store_info.reply_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.store_info.reply_email)) {
+      throw new Error('返信用メールアドレスの形式が不正');
+    }
     DOWS.forEach(d => {
       const k = String(d.key);
       const arr = state.time_slots_by_dow[k] || [];
@@ -417,6 +476,8 @@ window.saveAll = async function() {
       closed_dates: state.closed_dates,
       accept_until_minutes_before: state.accept_until_minutes_before
     };
+    if (Object.keys(state.store_info).length > 0) payload.store_info = state.store_info;
+    if (state.email_endpoint) payload.email_endpoint = state.email_endpoint;
     await set(ref(db, SETTINGS_PATH), payload);
     if (migratedFromLegacy) {
       document.getElementById('migrate-banner-slot').innerHTML = '';
@@ -464,10 +525,17 @@ function migrateIfLegacy(cfg) {
       state.closed_dows = Array.isArray(cfg.closed_dows) ? cfg.closed_dows.slice() : [];
       state.closed_dates = Array.isArray(cfg.closed_dates) ? cfg.closed_dates.slice() : [];
       state.accept_until_minutes_before = typeof cfg.accept_until_minutes_before === 'number' ? cfg.accept_until_minutes_before : 60;
+      state.store_info = (cfg.store_info && typeof cfg.store_info === 'object') ? Object.assign({ phone:'', address:'', reply_email:'' }, cfg.store_info) : { phone:'', address:'', reply_email:'' };
+      state.email_endpoint = typeof cfg.email_endpoint === 'string' ? cfg.email_endpoint : '';
     } else {
       state = JSON.parse(JSON.stringify(DEFAULTS));
+      state.store_info = Object.assign({ phone:'', address:'', reply_email:'' }, state.store_info);
     }
     document.getElementById('accept-minutes').value = state.accept_until_minutes_before;
+    document.getElementById('store-phone').value = state.store_info.phone || '';
+    document.getElementById('store-address').value = state.store_info.address || '';
+    document.getElementById('store-reply-email').value = state.store_info.reply_email || '';
+    document.getElementById('email-endpoint').value = state.email_endpoint || '';
     // 初期表示曜日：定休でない最初の曜日を選ぶ
     const firstOpen = DOWS.find(d => !isClosedDow(d.key));
     if (firstOpen) currentDow = firstOpen.key;

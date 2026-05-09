@@ -134,7 +134,7 @@ async function fbRestGet(path, timeoutMs) {
 let SETTINGS = null;
 let DAY_START_HOUR = 8; // POSのstore_config/day_start_hourを参照
 let step = 1;
-const sel = { date: null, slot: null, party: null, name: '', phone: '', note: '' };
+const sel = { date: null, slot: null, party: null, name: '', phone: '', email: '', note: '' };
 let dayBookings = {};   // {date: [{time_slot, status}, ...]}
 let confirmedNo = null;
 
@@ -328,11 +328,17 @@ function renderStep3() {
 }
 
 function renderStep4() {
+  const storePhone = (SETTINGS.store_info && SETTINGS.store_info.phone) ? SETTINGS.store_info.phone : '';
   let html = '<div class="card"><h2>📝 連絡先</h2>'
     + '<div class="input-row"><label>お名前<span class="req">*</span></label>'
     + '<input id="in-name" type="text" placeholder="山田 太郎" value="' + escAttr(sel.name) + '" autocomplete="name"></div>'
     + '<div class="input-row"><label>電話番号<span class="req">*</span></label>'
     + '<input id="in-phone" type="tel" placeholder="09012345678" value="' + escAttr(sel.phone) + '" autocomplete="tel" inputmode="tel"></div>'
+    + '<div class="input-row"><label>メールアドレス<span class="req">*</span></label>'
+    + '<input id="in-email" type="email" placeholder="example@example.com" value="' + escAttr(sel.email) + '" autocomplete="email" inputmode="email"></div>'
+    + '<div style="font-size:11px;color:#6b7280;margin:-6px 0 12px;line-height:1.5">店舗が予約を確定した時点で、ご入力のメールアドレスに承認メールが届きます。<br>メールアドレスをお持ちでない方は、お電話でご予約ください'
+    + (storePhone ? '：<a href="tel:' + escAttr(storePhone.replace(/[^0-9+]/g,'')) + '" style="color:#166534;text-decoration:underline">' + escHtml(storePhone) + '</a>' : '。')
+    + '</div>'
     + '<div class="input-row"><label>ご要望（任意）</label>'
     + '<textarea id="in-note" placeholder="アレルギー・お祝い等">' + escHtml(sel.note) + '</textarea></div>'
     + '<div id="form-error"></div>'
@@ -349,6 +355,7 @@ function renderStep5() {
     + '<div class="summary-row"><div class="summary-label">人数</div><div class="summary-value">' + sel.party + '名</div></div>'
     + '<div class="summary-row"><div class="summary-label">お名前</div><div class="summary-value">' + escHtml(sel.name) + '</div></div>'
     + '<div class="summary-row"><div class="summary-label">電話</div><div class="summary-value">' + escHtml(sel.phone) + '</div></div>'
+    + '<div class="summary-row"><div class="summary-label">メール</div><div class="summary-value">' + escHtml(sel.email) + '</div></div>'
     + (sel.note ? '<div class="summary-row"><div class="summary-label">要望</div><div class="summary-value">' + escHtml(sel.note) + '</div></div>' : '')
     + '<div id="form-error" style="margin-top:12px"></div>'
     + '<button class="cta" id="confirm-btn" style="margin-top:14px" onclick="window.__submit()">この内容で予約する</button>'
@@ -378,11 +385,15 @@ window.__back = (n) => setStep(n);
 window.__toConfirm = () => {
   const name = document.getElementById('in-name').value.trim();
   const phone = document.getElementById('in-phone').value.trim();
+  const email = document.getElementById('in-email').value.trim();
   const note = document.getElementById('in-note').value.trim();
   const err = document.getElementById('form-error');
   if (!name) { err.innerHTML = '<div class="error">お名前を入力してください</div>'; return; }
-  if (!phone || !/^[0-9\-+\s()]{8,}$/.test(phone)) { err.innerHTML = '<div class="error">電話番号を正しく入力してください</div>'; return; }
-  sel.name = name; sel.phone = phone; sel.note = note;
+  if (name.length > 50) { err.innerHTML = '<div class="error">お名前は50文字以内で入力してください</div>'; return; }
+  if (!phone || !/^[0-9\-+\s()]{8,}$/.test(phone) || phone.length > 30) { err.innerHTML = '<div class="error">電話番号を正しく入力してください</div>'; return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) { err.innerHTML = '<div class="error">メールアドレスを正しく入力してください</div>'; return; }
+  if (note.length > 500) { err.innerHTML = '<div class="error">ご要望は500文字以内で入力してください</div>'; return; }
+  sel.name = name; sel.phone = phone; sel.email = email; sel.note = note;
   setStep(5);
 };
 
@@ -404,6 +415,7 @@ window.__submit = async () => {
       party_size: sel.party,
       name: sel.name,
       phone: sel.phone,
+      email: sel.email,
       note: sel.note || null,
       status: 'pending',
       created_at: Date.now()
