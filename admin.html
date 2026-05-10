@@ -13,12 +13,56 @@ header h1 { font-size: 16px; font-weight: 600; color: #f1f5f9; flex: 1; }
 .head-link { color: #94a3b8; text-decoration: none; font-size: 13px; padding: 6px 10px; border: 1px solid #334155; border-radius: 8px; }
 .head-link:hover { color: #f1f5f9; border-color: #475569; }
 
-.date-bar { background: #1e293b; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #334155; }
-.date-nav { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 18px; cursor: pointer; line-height: 1; }
-.date-nav:hover { border-color: #166534; }
-.date-input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 8px 12px; font-size: 14px; flex: 1; font-family: inherit; }
-.date-input:focus { outline: none; border-color: #166534; }
-.date-today { background: #166534; color: white; border: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+/* 月ナビ */
+.month-bar { background: #1e293b; padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #334155; }
+.month-nav { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 6px 14px; font-size: 18px; cursor: pointer; line-height: 1; }
+.month-nav:hover { border-color: #166534; }
+.month-label { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: #f1f5f9; }
+.month-today-btn { background: #166534; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+/* カレンダーグリッド */
+.calendar { background: #1e293b; padding: 8px 12px 14px; border-bottom: 1px solid #334155; }
+.dow-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 6px 0 8px; }
+.dow-header { text-align: center; font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 0.08em; }
+.dow-header.sun { color: #f87171; }
+.dow-header.sat { color: #60a5fa; }
+
+.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.month-cell { background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 5px 6px 4px; cursor: pointer; position: relative; min-height: 64px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.12s; }
+.month-cell:hover { border-color: #475569; }
+.month-cell.other-month { opacity: 0.32; }
+.month-cell.today { border-color: #475569; box-shadow: inset 0 0 0 1px #475569; }
+.month-cell.selected { background: #166534; border-color: #166534; }
+.month-cell.selected:hover { border-color: #14532d; }
+.month-cell.closed { background: #111827; }
+.month-cell.closed .cell-day { color: #475569; }
+.month-cell.selected.closed { background: #166534; }
+.month-cell.selected.closed .cell-day { color: #d1fae5; }
+
+.cell-day { font-size: 14px; font-weight: 700; color: #e2e8f0; line-height: 1; }
+.cell-day.sun { color: #f87171; }
+.cell-day.sat { color: #60a5fa; }
+.month-cell.selected .cell-day,
+.month-cell.selected .cell-day.sun,
+.month-cell.selected .cell-day.sat { color: white !important; }
+
+.cell-summary { font-size: 11px; line-height: 1.25; text-align: right; }
+.cell-count { font-weight: 700; color: #f1f5f9; }
+.cell-party { color: #94a3b8; }
+.month-cell.selected .cell-count,
+.month-cell.selected .cell-party { color: white; }
+.cell-closed-mark { font-size: 9px; color: #64748b; text-align: right; }
+.month-cell.selected .cell-closed-mark { color: #d1fae5; }
+
+.cell-pending-dot { position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: #fbbf24; }
+
+/* 選択日ヘッダ・フィルタ */
+.day-list-header { background: #0f172a; padding: 10px 16px 8px; font-size: 14px; color: #f1f5f9; font-weight: 700; border-bottom: 1px solid #1e293b; display: flex; align-items: center; gap: 10px; }
+.day-list-header .dow-tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #1e293b; color: #94a3b8; }
+.day-list-header .dow-tag.sun { color: #f87171; }
+.day-list-header .dow-tag.sat { color: #60a5fa; }
+.day-list-header .dow-tag.closed { background: #7f1d1d; color: #fecaca; }
+.day-list-header .meta { margin-left: auto; font-size: 12px; font-weight: 500; color: #94a3b8; }
 
 .filter-bar { padding: 10px 16px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; }
 .filter-pill { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; flex-shrink: 0; }
@@ -27,6 +71,7 @@ header h1 { font-size: 16px; font-weight: 600; color: #f1f5f9; flex: 1; }
 .filter-pill .count { display: inline-block; margin-left: 6px; background: rgba(0,0,0,0.2); padding: 0 6px; border-radius: 999px; font-size: 10px; }
 .filter-pill.active .count { background: rgba(255,255,255,0.2); }
 
+/* 既存：予約カード */
 main { padding: 14px 16px; max-width: 760px; margin: 0 auto; }
 .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
 .summary-cell { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 10px 8px; text-align: center; }
@@ -69,11 +114,11 @@ main { padding: 14px 16px; max-width: 760px; margin: 0 auto; }
 .mail-badge.sent { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
 .mail-badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 
-.empty-state { text-align: center; padding: 60px 20px; color: #64748b; font-size: 13px; }
+.empty-state { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; }
 .loading { text-align: center; padding: 60px 20px; color: #64748b; }
 .error-msg { background: #7f1d1d; color: #fecaca; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
 
-.toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); padding: 10px 22px; border-radius: 20px; font-size: 13px; font-weight: 600; display: none; z-index: 200; white-space: nowrap; }
+.toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); padding: 10px 22px; border-radius: 20px; font-size: 13px; font-weight: 600; display: none; z-index: 200; white-space: nowrap; max-width: 90vw; }
 .toast.show { display: block; }
 .toast.ok { background: #166534; color: white; }
 .toast.err { background: #991b1b; color: #fecaca; }
@@ -86,13 +131,27 @@ main { padding: 14px 16px; max-width: 760px; margin: 0 auto; }
   <a class="head-link" href="settings.html">設定</a>
 </header>
 
-<div class="date-bar">
-  <button class="date-nav" onclick="changeDay(-1)" title="前日">‹</button>
-  <input class="date-input" id="date-input" type="date">
-  <button class="date-nav" onclick="changeDay(1)" title="翌日">›</button>
-  <button class="date-today" onclick="goToday()">今日</button>
+<div class="month-bar">
+  <button class="month-nav" onclick="changeMonth(-1)" title="前月">‹</button>
+  <div class="month-label" id="month-label">—</div>
+  <button class="month-nav" onclick="changeMonth(1)" title="翌月">›</button>
+  <button class="month-today-btn" onclick="goToday()">今日</button>
 </div>
 
+<div class="calendar">
+  <div class="dow-header-row">
+    <div class="dow-header sun">日</div>
+    <div class="dow-header">月</div>
+    <div class="dow-header">火</div>
+    <div class="dow-header">水</div>
+    <div class="dow-header">木</div>
+    <div class="dow-header">金</div>
+    <div class="dow-header sat">土</div>
+  </div>
+  <div class="month-grid" id="month-grid"></div>
+</div>
+
+<div class="day-list-header" id="day-list-header"></div>
 <div class="filter-bar" id="filter-bar"></div>
 
 <div class="toast" id="toast"></div>
@@ -128,42 +187,52 @@ const FILTERS = [
   { key: 'cancelled', label: 'キャンセル' }
 ];
 const STATUS_LABELS = { pending: '受付待ち', confirmed: '確定', cancelled: 'キャンセル', no_show: '来店なし' };
+const DOW_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 
-let currentDate = todayStr();
+let currentYear, currentMonth;          // 表示中の月（month: 1-12）
+let selectedDate = todayStr();          // 選択中の日付（YYYY-MM-DD）
+let monthBookings = {};                 // { 'YYYY-MM-DD': [bookingObj, ...] }
 let currentFilter = 'all';
-let bookings = []; // [{id, ...payload}]
-let SETTINGS = {}; // reservation_settings（email_endpoint等の参照に使用）
+let SETTINGS = {};                      // reservation_settings 全体
+
+(function initMonthFromToday() {
+  const d = new Date();
+  currentYear = d.getFullYear();
+  currentMonth = d.getMonth() + 1;
+})();
 
 function todayStr() {
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+function pad2(n) { return String(n).padStart(2, '0'); }
+function fmtClockShort(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function dateOf(year, month, day) {
+  return year + '-' + pad2(month) + '-' + pad2(day);
 }
 
 function showToast(msg, ok) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast ' + (ok ? 'ok' : 'err') + ' show';
-  setTimeout(() => t.classList.remove('show'), 2000);
+  setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-function fmtClockShort(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+// ---- 休業判定（settings の closed_dows / closed_dates） ----
+function isClosedDate(dateStr) {
+  if (SETTINGS.closed_dates && SETTINGS.closed_dates.indexOf(dateStr) !== -1) return true;
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  if (SETTINGS.closed_dows && SETTINGS.closed_dows.indexOf(dow) !== -1) return true;
+  return false;
 }
 
-function mailStatusBadge(b) {
-  if (b.email_sent_at) {
-    return ' <span class="mail-badge sent">✉ 送信済 ' + fmtClockShort(b.email_sent_at) + '</span>';
-  }
-  if (b.status === 'confirmed' && b.email) {
-    return ' <span class="mail-badge pending">✉ 未送信</span>';
-  }
-  return '';
-}
-
+// ---- データ取得 ----
 async function loadSettings() {
   try {
     const snap = await get(ref(db, 'tenants/' + TENANT_ID + '/reservation_settings'));
@@ -173,30 +242,142 @@ async function loadSettings() {
   }
 }
 
-async function loadDate(dateStr) {
+async function loadMonth(year, month) {
+  // 月一括取得：tenants/{tid}/reservations 全体を一度取得して、当月分をフィルタ。
+  // データ量が増えたら orderBy "$key" 範囲取得に置換予定（要 .indexOn ".key" Rules）。
   document.getElementById('content').className = 'loading';
   document.getElementById('content').textContent = '読み込み中...';
   document.getElementById('summary').style.display = 'none';
   try {
-    const snap = await get(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + dateStr));
-    const data = snap.val() || {};
-    bookings = Object.keys(data).map(id => Object.assign({ id }, data[id]));
-    bookings.sort((a, b) => (a.time_slot || '').localeCompare(b.time_slot || ''));
-    render();
+    const snap = await get(ref(db, 'tenants/' + TENANT_ID + '/reservations'));
+    const all = snap.val() || {};
+    const prefix = year + '-' + pad2(month) + '-';
+    const next = {};
+    Object.keys(all).forEach(date => {
+      if (date.indexOf(prefix) !== 0) return;
+      const day = all[date] || {};
+      const list = Object.keys(day).map(id => Object.assign({ id }, day[id]));
+      list.sort((a, b) => (a.time_slot || '').localeCompare(b.time_slot || ''));
+      next[date] = list;
+    });
+    monthBookings = next;
+    renderAll();
   } catch (e) {
+    monthBookings = {};
+    renderCalendar();
+    renderDayHeader();
+    renderFilters({ all: 0, pending: 0, confirmed: 0, cancelled: 0, no_show: 0 });
     document.getElementById('content').className = '';
     document.getElementById('content').innerHTML = '<div class="error-msg">読み込み失敗: ' + escHtml(e.message) + '</div>';
   }
 }
 
-function counts() {
-  const c = { all: bookings.length, pending: 0, confirmed: 0, cancelled: 0, no_show: 0 };
-  bookings.forEach(b => { if (c[b.status] != null) c[b.status]++; });
-  return c;
+// ---- 月カレンダー描画 ----
+function renderMonthLabel() {
+  document.getElementById('month-label').textContent = currentYear + '年' + currentMonth + '月';
 }
 
+function renderCalendar() {
+  renderMonthLabel();
+  const firstDow = new Date(currentYear, currentMonth - 1, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+  const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+  const today = todayStr();
+  const grid = document.getElementById('month-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < totalCells; i++) {
+    const dayNum = i - firstDow + 1;
+    let cellYear = currentYear, cellMonth = currentMonth, cellDay = dayNum;
+    if (dayNum < 1) {
+      // 前月
+      const prev = new Date(currentYear, currentMonth - 2, 1);
+      const prevDays = new Date(prev.getFullYear(), prev.getMonth() + 1, 0).getDate();
+      cellYear = prev.getFullYear();
+      cellMonth = prev.getMonth() + 1;
+      cellDay = prevDays + dayNum;
+    } else if (dayNum > daysInMonth) {
+      // 翌月
+      const nx = new Date(currentYear, currentMonth, 1);
+      cellYear = nx.getFullYear();
+      cellMonth = nx.getMonth() + 1;
+      cellDay = dayNum - daysInMonth;
+    }
+    const dateStr = dateOf(cellYear, cellMonth, cellDay);
+    const dow = new Date(dateStr + 'T00:00:00').getDay();
+    const isOther = (dayNum < 1) || (dayNum > daysInMonth);
+    const isToday = dateStr === today;
+    const isSelected = dateStr === selectedDate;
+    const closed = isClosedDate(dateStr);
+    const list = monthBookings[dateStr] || [];
+    const activeList = list.filter(b => b.status !== 'cancelled');
+    const partyTotal = list.filter(b => b.status === 'pending' || b.status === 'confirmed')
+                           .reduce((s, b) => s + (b.party_size || 0), 0);
+    const hasPending = list.some(b => b.status === 'pending');
+
+    const cls = ['month-cell'];
+    if (isOther) cls.push('other-month');
+    if (isToday) cls.push('today');
+    if (isSelected) cls.push('selected');
+    if (closed) cls.push('closed');
+
+    const dayClsParts = ['cell-day'];
+    if (dow === 0) dayClsParts.push('sun');
+    if (dow === 6) dayClsParts.push('sat');
+
+    let summaryHtml = '';
+    if (activeList.length > 0) {
+      summaryHtml = '<div class="cell-summary">'
+        + '<div class="cell-count">' + activeList.length + '件</div>'
+        + '<div class="cell-party">' + partyTotal + '名</div>'
+        + '</div>';
+    } else if (closed) {
+      summaryHtml = '<div class="cell-closed-mark">休業</div>';
+    } else {
+      summaryHtml = '<div class="cell-summary"><div class="cell-party">—</div></div>';
+    }
+
+    const cell = document.createElement('div');
+    cell.className = cls.join(' ');
+    cell.dataset.date = dateStr;
+    cell.innerHTML =
+      '<div class="' + dayClsParts.join(' ') + '">' + cellDay + '</div>'
+      + summaryHtml
+      + (hasPending ? '<div class="cell-pending-dot" title="受付待ちあり"></div>' : '');
+    cell.addEventListener('click', () => selectDate(dateStr));
+    grid.appendChild(cell);
+  }
+}
+
+// ---- 選択日ヘッダ ----
+function renderDayHeader() {
+  const el = document.getElementById('day-list-header');
+  const dow = new Date(selectedDate + 'T00:00:00').getDay();
+  const dowLabel = DOW_LABELS[dow];
+  const closed = isClosedDate(selectedDate);
+  const list = monthBookings[selectedDate] || [];
+  const active = list.filter(b => b.status !== 'cancelled');
+  const partyTotal = list.filter(b => b.status === 'pending' || b.status === 'confirmed')
+                         .reduce((s, b) => s + (b.party_size || 0), 0);
+  const tagCls = ['dow-tag'];
+  if (dow === 0) tagCls.push('sun');
+  if (dow === 6) tagCls.push('sat');
+  if (closed) tagCls.push('closed');
+  el.innerHTML =
+    '<span>' + selectedDate + '</span>'
+    + '<span class="' + tagCls.join(' ') + '">' + dowLabel + (closed ? '・休業' : '') + '</span>'
+    + '<span class="meta">' + active.length + '件 / ' + partyTotal + '名</span>';
+}
+
+// ---- フィルタ・サマリ・カードリスト ----
+function counts() {
+  const list = monthBookings[selectedDate] || [];
+  const c = { all: list.length, pending: 0, confirmed: 0, cancelled: 0, no_show: 0 };
+  list.forEach(b => { if (c[b.status] != null) c[b.status]++; });
+  return c;
+}
 function totalParty() {
-  return bookings.filter(b => b.status === 'confirmed' || b.status === 'pending').reduce((s, b) => s + (b.party_size || 0), 0);
+  const list = monthBookings[selectedDate] || [];
+  return list.filter(b => b.status === 'confirmed' || b.status === 'pending').reduce((s, b) => s + (b.party_size || 0), 0);
 }
 
 function renderFilters(c) {
@@ -209,7 +390,7 @@ function renderFilters(c) {
   document.querySelectorAll('[data-f]').forEach(el => {
     el.addEventListener('click', () => {
       currentFilter = el.dataset.f;
-      render();
+      renderListAndSummary();
     });
   });
 }
@@ -224,15 +405,16 @@ function renderSummary(c) {
     + '<div class="summary-cell"><div class="summary-num">' + c.pending + '</div><div class="summary-label">受付待ち</div></div>';
 }
 
-function render() {
+function renderListAndSummary() {
   const c = counts();
   renderFilters(c);
   renderSummary(c);
-  const list = currentFilter === 'all' ? bookings : bookings.filter(b => b.status === currentFilter);
+  const all = monthBookings[selectedDate] || [];
+  const list = currentFilter === 'all' ? all : all.filter(b => b.status === currentFilter);
   const root = document.getElementById('content');
   root.className = '';
   if (list.length === 0) {
-    root.innerHTML = '<div class="empty-state">' + (bookings.length === 0 ? 'この日の予約はありません' : '該当する予約はありません') + '</div>';
+    root.innerHTML = '<div class="empty-state">' + (all.length === 0 ? 'この日の予約はありません' : '該当する予約はありません') + '</div>';
     return;
   }
   root.innerHTML = list.map(renderCard).join('');
@@ -243,6 +425,16 @@ function render() {
       handleAction(id, act);
     });
   });
+}
+
+function mailStatusBadge(b) {
+  if (b.email_sent_at) {
+    return ' <span class="mail-badge sent">✉ 送信済 ' + fmtClockShort(b.email_sent_at) + '</span>';
+  }
+  if (b.status === 'confirmed' && b.email) {
+    return ' <span class="mail-badge pending">✉ 未送信</span>';
+  }
+  return '';
 }
 
 function renderCard(b) {
@@ -285,8 +477,10 @@ function renderCard(b) {
     + '</div>';
 }
 
+// ---- 操作 ----
 async function handleAction(id, act) {
-  const target = bookings.find(b => b.id === id);
+  const list = monthBookings[selectedDate] || [];
+  const target = list.find(b => b.id === id);
   if (!target) return;
 
   if (act === 'resend_email') {
@@ -310,18 +504,15 @@ async function handleAction(id, act) {
   }
   if (confirmMsg && !confirm(confirmMsg)) return;
   try {
-    // 順序：先に Firebase ステータス更新を完了 → 確定の場合のみ後段でメール送信
-    // メール送信失敗はステータス確定をブロックしない（director指針）
-    await update(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + currentDate + '/' + id), updates);
+    await update(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + selectedDate + '/' + id), updates);
     Object.assign(target, updates);
-    render();
+    renderAll();
     showToast('✓ 更新しました', true);
   } catch (e) {
     showToast('更新失敗: ' + e.message, false);
     return;
   }
 
-  // 確定操作で初回のみメール送信（email_sent_at が未記録の予約のみ）
   if (act === 'confirm' && !target.email_sent_at) {
     await sendConfirmationMail(target, { isResend: false });
   }
@@ -357,8 +548,6 @@ async function sendConfirmationMail(target, opts) {
   let result = null;
   let errorText = '';
   try {
-    // GAS Web App は CORS preflight 非対応のため、Content-Type 指定なしで送る
-    // （ブラウザが自動で text/plain;charset=UTF-8 相当を付与・preflightスキップ）
     const res = await fetch(endpoint, { method: 'POST', body: body, redirect: 'follow' });
     if (!res.ok) {
       errorText = 'http_' + res.status;
@@ -375,7 +564,6 @@ async function sendConfirmationMail(target, opts) {
   const ok = !!(result && result.ok);
   if (!ok && !errorText) errorText = (result && result.error) ? String(result.error) : 'unknown';
 
-  // email_log に成否記録（director指針：admin で「失敗」表示の根拠）
   try {
     await set(ref(db, 'tenants/' + TENANT_ID + '/email_log/' + target.date + '/' + id), {
       sent_at: sentAt,
@@ -389,36 +577,64 @@ async function sendConfirmationMail(target, opts) {
       await update(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + target.date + '/' + id), { email_sent_at: sentAt });
       target.email_sent_at = sentAt;
     } catch (_) { /* */ }
-    render();
+    renderAll();
     showToast(isResend ? '✉ メール再送信完了' : '✉ メール送信完了', true);
   } else {
-    render();
+    renderAll();
     showToast('メール送信失敗：手動連絡してください（' + errorText + '）', false);
   }
 }
 
-window.changeDay = (delta) => {
-  const d = new Date(currentDate + 'T00:00:00');
-  d.setDate(d.getDate() + delta);
-  currentDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  document.getElementById('date-input').value = currentDate;
-  loadDate(currentDate);
-};
-window.goToday = () => {
-  currentDate = todayStr();
-  document.getElementById('date-input').value = currentDate;
-  loadDate(currentDate);
-};
-
-document.getElementById('date-input').addEventListener('change', e => {
-  if (e.target.value) {
-    currentDate = e.target.value;
-    loadDate(currentDate);
+// ---- 状態遷移 ----
+function selectDate(dateStr) {
+  selectedDate = dateStr;
+  // 別の月を選んだ場合は月をめくる
+  const y = parseInt(dateStr.slice(0, 4), 10);
+  const m = parseInt(dateStr.slice(5, 7), 10);
+  if (y !== currentYear || m !== currentMonth) {
+    currentYear = y;
+    currentMonth = m;
+    loadMonth(currentYear, currentMonth);
+    return;
   }
-});
+  renderAll();
+}
 
-document.getElementById('date-input').value = currentDate;
-(async () => { await loadSettings(); loadDate(currentDate); })();
+window.changeMonth = (delta) => {
+  const d = new Date(currentYear, currentMonth - 1 + delta, 1);
+  currentYear = d.getFullYear();
+  currentMonth = d.getMonth() + 1;
+  // 月をめくった場合の選択日：その月の1日に切替（既に月内に選択日があれば維持）
+  const sel = new Date(selectedDate + 'T00:00:00');
+  if (sel.getFullYear() !== currentYear || sel.getMonth() + 1 !== currentMonth) {
+    selectedDate = dateOf(currentYear, currentMonth, 1);
+  }
+  loadMonth(currentYear, currentMonth);
+};
+
+window.goToday = () => {
+  selectedDate = todayStr();
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth() + 1;
+  if (y !== currentYear || m !== currentMonth) {
+    currentYear = y;
+    currentMonth = m;
+    loadMonth(currentYear, currentMonth);
+  } else {
+    renderAll();
+  }
+};
+
+function renderAll() {
+  renderCalendar();
+  renderDayHeader();
+  renderListAndSummary();
+}
+
+(async () => {
+  await loadSettings();
+  await loadMonth(currentYear, currentMonth);
+})();
 </script>
 
 </body>
