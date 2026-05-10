@@ -201,6 +201,17 @@ let SETTINGS = {};                      // reservation_settings 全体
   currentMonth = d.getMonth() + 1;
 })();
 
+// URL クエリ ?filter=xxx で初期フィルタ指定（POSキッチンのバッジから飛んできた時等）
+(function initFilterFromQuery() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const f = params.get('filter');
+    if (f && FILTERS.some(x => x.key === f)) {
+      currentFilter = f;
+    }
+  } catch (e) { /* no-op */ }
+})();
+
 function todayStr() {
   const d = new Date();
   return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
@@ -634,6 +645,14 @@ function renderAll() {
 (async () => {
   await loadSettings();
   await loadMonth(currentYear, currentMonth);
+  // ハッシュ #list があれば予約リスト位置までスムーススクロール
+  // （POSキッチンのバッジから飛んできて、すぐ未承認一覧を見たい場合等）
+  if (window.location.hash === '#list') {
+    setTimeout(() => {
+      const el = document.getElementById('day-list-header');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 250);
+  }
 })();
 </script>
 
