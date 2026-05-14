@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 2026-05-15: PWA mode メタタグ追加。kitchen.html (PWA) からの cross-origin iframe overlay 表示で、
+     これらがないと iOS Safari が「外部サイトへのナビゲーション」と判定して Web Sheet を強制起動してしまう。
+     勤怠サイト（既に同メタタグあり）が iframe で問題なく表示できているのと挙動を揃える。 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="サワディ兄弟 予約">
 <title>予約管理 - サワディ兄弟</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
