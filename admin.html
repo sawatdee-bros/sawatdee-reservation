@@ -129,7 +129,16 @@ main { padding: 14px 16px; max-width: 760px; margin: 0 auto; }
 .toast.show { display: block; }
 .toast.ok { background: #166534; color: white; }
 .toast.err { background: #991b1b; color: #fecaca; }
+/* 祝日表示 */
+.cell-day.holiday { color: #f87171; }
+.month-cell.selected .cell-day.holiday { color: white !important; }
+.cell-holiday-name { font-size: 9px; color: #fca5a5; line-height: 1.1; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.month-cell.selected .cell-holiday-name { color: #fecaca; }
+.month-cell.closed .cell-holiday-name { color: #94a3b8; }
 </style>
+<!-- 国民の祝日判定ライブラリ（クライアント側計算・1955-2150対応・年次メンテ不要）
+     attendance リポと同バージョン pin で運用 -->
+<script src="https://cdn.jsdelivr.net/npm/japanese-holidays@1.0.10/lib/japanese-holidays.js"></script>
 </head>
 <body>
 
@@ -231,6 +240,17 @@ function fmtClockShort(ts) {
   return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
 }
 function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// 国民の祝日判定（attendance リポと同実装・japanese-holidays ライブラリ計算）
+const _holidayCache = {};
+function getHoliday(ymdStr) {
+  if (ymdStr in _holidayCache) return _holidayCache[ymdStr];
+  if (!window.JapaneseHolidays) { _holidayCache[ymdStr] = null; return null; }
+  const [y, m, d] = ymdStr.split('-').map(Number);
+  const result = window.JapaneseHolidays.isHoliday(new Date(y, m - 1, d));
+  _holidayCache[ymdStr] = result || null;
+  return _holidayCache[ymdStr];
+}
 
 function dateOf(year, month, day) {
   return year + '-' + pad2(month) + '-' + pad2(day);
@@ -339,9 +359,14 @@ function renderCalendar() {
     if (isSelected) cls.push('selected');
     if (closed) cls.push('closed');
 
+    const holiday = getHoliday(dateStr);
+
     const dayClsParts = ['cell-day'];
-    if (dow === 0) dayClsParts.push('sun');
-    if (dow === 6) dayClsParts.push('sat');
+    if (closed) {
+      // closed のスタイルは .month-cell.closed .cell-day で別途定義済み
+    } else if (holiday) dayClsParts.push('holiday');
+    else if (dow === 0) dayClsParts.push('sun');
+    else if (dow === 6) dayClsParts.push('sat');
 
     let summaryHtml = '';
     if (activeList.length > 0) {
@@ -355,11 +380,16 @@ function renderCalendar() {
       summaryHtml = '<div class="cell-summary"><div class="cell-party">—</div></div>';
     }
 
+    const holidayHtml = holiday
+      ? '<div class="cell-holiday-name" title="' + escHtml(holiday) + '">' + escHtml(holiday) + '</div>'
+      : '';
+
     const cell = document.createElement('div');
     cell.className = cls.join(' ');
     cell.dataset.date = dateStr;
     cell.innerHTML =
       '<div class="' + dayClsParts.join(' ') + '">' + cellDay + '</div>'
+      + holidayHtml
       + summaryHtml
       + (hasPending ? '<div class="cell-pending-dot" title="受付待ちあり"></div>' : '');
     cell.addEventListener('click', () => selectDate(dateStr));

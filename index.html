@@ -75,7 +75,15 @@ main { padding: 20px; max-width: 600px; margin: 0 auto; }
 .success-card .note { font-size: 13px; color: #6b7280; line-height: 1.6; }
 
 .legal-note { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 16px; line-height: 1.5; padding: 0 12px; }
+/* 祝日表示 */
+.date-cell.holiday .day-of-week { color: #dc2626; }
+.date-cell.selected .day-of-week, .date-cell.closed .day-of-week { color: inherit !important; }
+.date-cell .holiday-tag { font-size: 9px; color: #dc2626; line-height: 1.1; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.date-cell.selected .holiday-tag { color: white; }
+.date-cell.closed .holiday-tag { color: #9ca3af; }
 </style>
+<!-- 国民の祝日判定ライブラリ（attendance / 予約 admin と同バージョン pin） -->
+<script src="https://cdn.jsdelivr.net/npm/japanese-holidays@1.0.10/lib/japanese-holidays.js"></script>
 </head>
 <body>
 
@@ -155,6 +163,17 @@ function fmtDateLabel(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
+// 国民の祝日判定（attendance / 予約 admin と同実装・japanese-holidays ライブラリ計算）
+const _holidayCache = {};
+function getHoliday(ymdStr) {
+  if (ymdStr in _holidayCache) return _holidayCache[ymdStr];
+  if (!window.JapaneseHolidays) { _holidayCache[ymdStr] = null; return null; }
+  const [y, m, d] = ymdStr.split('-').map(Number);
+  const result = window.JapaneseHolidays.isHoliday(new Date(y, m - 1, d));
+  _holidayCache[ymdStr] = result || null;
+  return _holidayCache[ymdStr];
+}
+
 function getNextDays(n) {
   const out = [];
   const today = new Date();
@@ -219,16 +238,20 @@ function renderStep1() {
     const ds = fmtDateLabel(d);
     const dow = ['日','月','火','水','木','金','土'][d.getDay()];
     const closed = isClosed(ds);
+    const holiday = getHoliday(ds);
     const cls = ['date-cell'];
-    if (d.getDay() === 0) cls.push('sun');
-    if (d.getDay() === 6) cls.push('sat');
+    // 表示色優先度: 休業 > 祝日 > 日 > 土
     if (closed) cls.push('closed');
+    else if (holiday) cls.push('holiday');
+    else if (d.getDay() === 0) cls.push('sun');
+    else if (d.getDay() === 6) cls.push('sat');
     if (sel.date === ds) cls.push('selected');
     html += '<div class="' + cls.join(' ') + '" data-d="' + ds + '" ' + (closed ? '' : 'data-pick="1"') + '>'
       + '<div class="day-of-week">' + dow + '</div>'
       + '<div class="day">' + d.getDate() + '</div>'
       + '<div class="month">' + (d.getMonth()+1) + '月</div>'
       + (closed ? '<div class="month" style="margin-top:4px">休業</div>' : '')
+      + (holiday && !closed ? '<div class="holiday-tag" title="' + holiday + '">' + holiday + '</div>' : '')
       + '</div>';
   });
   html += '</div></div>';
