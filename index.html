@@ -582,10 +582,13 @@ function renderDone() {
   const endTime = minToHhmm(hhmmToMin(sel.start) + SETTINGS.stay_minutes);
   const html = '<div class="success-card">'
     + '<div class="success-icon">🎉</div>'
-    + '<h2>ご予約を承りました</h2>'
+    + '<h2>ご予約を受け付けました</h2>'
     + '<div class="note">' + sel.date + ' ' + sel.start + '〜' + endTime + ' / ' + sel.party + '名様</div>'
     + '<div class="reservation-no">予約番号: ' + confirmedNo + '</div>'
-    + '<div class="note">店舗からの確認連絡があるまで「仮予約」となります。<br>変更・キャンセルはお電話でご連絡ください。</div>'
+    + '<div class="note">現時点ではまだ<strong>仮予約</strong>の状態です。<br>'
+    + 'ご登録のメールアドレス宛に店舗からお送りする「予約確認メール」をもちまして、正式にご予約が完了いたします。<br>'
+    + '<small style="color:#9ca3af">※メールが届かない場合は迷惑メールフォルダもご確認ください</small></div>'
+    + '<div class="note" style="margin-top:8px">ご変更・キャンセルはお電話にてお願いいたします。</div>'
     + '</div>';
   $main.innerHTML = html;
   document.querySelectorAll('.step-pill').forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
