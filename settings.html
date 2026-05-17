@@ -96,7 +96,7 @@ select.field-input { padding-right: 26px; }
 <main id="main" style="display:none">
 
   <div class="section">
-    <div class="section-title">営業時間（曜日別）</div>
+    <div class="section-title">予約受付時間（曜日別）</div>
     <div class="card">
       <div class="dow-tabs" id="dow-tabs"></div>
       <div class="dow-panel-header">
@@ -111,10 +111,10 @@ select.field-input { padding-right: 26px; }
           <div>開始</div><div>終了</div><div></div>
         </div>
         <div id="ranges-container"></div>
-        <button class="add-btn" onclick="addRange()">＋ 営業時間帯を追加</button>
+        <button class="add-btn" onclick="addRange()">＋ 予約受付時間帯を追加</button>
       </div>
       <div id="closed-day-msg" class="closed-day-msg" style="display:none">この曜日は定休です。<br>「この曜日を定休にする」のチェックを外すと編集可能になります。</div>
-      <div class="note">曜日別の営業時間レンジを設定。ランチ営業もある場合は複数レンジを追加可能。<br>客向け画面ではこのレンジ内で「時刻刻み」ごとの開始時刻が自動生成される。</div>
+      <div class="note">曜日別の予約受付時間レンジを設定。ランチ営業もある場合は複数レンジを追加可能。<br>客向け画面ではこのレンジ内で「時刻刻み」ごとの開始時刻が自動生成される。</div>
     </div>
   </div>
 
@@ -400,7 +400,7 @@ function addMinutes(hhmm_, mins) {
 window.copyToOtherDays = function() {
   const src = state.business_hours_by_dow[String(currentDow)];
   if (!src || src.length === 0) {
-    showToast('コピー元の営業時間がありません', 'warn');
+    showToast('コピー元の予約受付時間がありません', 'warn');
     return;
   }
   const targets = DOWS.filter(d => d.key !== currentDow && !isClosedDow(d.key)).map(d => d.label);
@@ -408,7 +408,7 @@ window.copyToOtherDays = function() {
     showToast('コピー先の営業曜日がありません', 'warn');
     return;
   }
-  if (!confirm('現在の曜日設定を ' + targets.join('・') + ' にコピーします。\n（既存の営業時間は上書きされます）'))
+  if (!confirm('現在の曜日設定を ' + targets.join('・') + ' にコピーします。\n（既存の予約受付時間は上書きされます）'))
     return;
   DOWS.forEach(d => {
     if (d.key !== currentDow && !isClosedDow(d.key)) {

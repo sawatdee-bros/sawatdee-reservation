@@ -47,6 +47,12 @@ main { padding: 14px; max-width: 600px; margin: 0 auto; }
 .cal-cell .mark-circle { font-size: 18px; color: #f59e0b; font-weight: 700; line-height: 1; }
 .cal-cell .mark-x { font-size: 14px; color: #9ca3af; font-weight: 700; line-height: 1; }
 .cal-cell .mark-bar { font-size: 12px; color: #d1d5db; font-weight: 700; line-height: 1; }
+.cal-cell .mark-tel { font-size: 10px; color: #ea580c; font-weight: 700; line-height: 1; letter-spacing: 0.02em; }
+.cal-cell.tel { background: white; cursor: default; }
+.cal-cell.tel:hover { border-color: #f3f4f6; }
+.cal-cell.tel .day-num { color: #ea580c; }
+.cal-cell.tel.sun .day-num { color: #dc2626; }
+.cal-cell.tel.sat .day-num { color: #2563eb; }
 .cal-cell.sun .day-num { color: #dc2626; }
 .cal-cell.sat .day-num { color: #2563eb; }
 .cal-cell.holiday .day-num { color: #dc2626; }
@@ -106,6 +112,7 @@ main { padding: 14px; max-width: 600px; margin: 0 auto; }
 .legend .l-mark { font-weight: 700; }
 .legend .l-mark.o { color: #f59e0b; }
 .legend .l-mark.x { color: #9ca3af; }
+.legend .l-mark.tel { color: #ea580c; font-size: 10px; }
 .legend .l-mark.b { color: #d1d5db; }
 </style>
 <!-- 国民の祝日判定ライブラリ -->
@@ -146,7 +153,7 @@ const FC = {
 };
 const TENANT_ID = 'sawatdee-bros';
 const FB_BASE = FC.databaseURL;
-const MAX_PARTY = 10;
+let MAX_PARTY = 10; // init で SETTINGS.max_seats から上書き
 const MONTHS_AHEAD = 3; // 当月含め前後ナビ可能な範囲
 
 const app = initializeApp(FC);
@@ -388,7 +395,7 @@ function renderCalendar() {
     if (avail === 'past') { cls.push('past'); mark = '<div class="mark-bar">─</div>'; }
     else if (avail === 'closed') { cls.push('closed'); mark = '<div class="mark-bar">休</div>'; }
     else if (avail === 'no-biz') { cls.push('no-biz'); mark = '<div class="mark-bar">─</div>'; }
-    else if (avail === 'past-deadline') { cls.push('closed'); mark = '<div class="mark-bar">─</div>'; }
+    else if (avail === 'past-deadline') { cls.push('tel'); mark = '<div class="mark-tel">TEL</div>'; }
     else if (avail === 'full') { mark = '<div class="mark-x">×</div>'; }
     else { mark = '<div class="mark-circle">○</div>'; }
     if (dow === 0) cls.push('sun');
@@ -405,7 +412,7 @@ function renderCalendar() {
       + '</div>';
   }
   html += '</div>';
-  html += '<div class="legend"><span><span class="l-mark o">○</span>空き</span><span><span class="l-mark x">×</span>満席</span><span><span class="l-mark b">─</span>休業/対象外</span></div>';
+  html += '<div class="legend"><span><span class="l-mark o">○</span>空き</span><span><span class="l-mark x">×</span>満席</span><span><span class="l-mark tel">TEL</span>電話のみ</span><span><span class="l-mark b">─</span>休業/対象外</span></div>';
   c.innerHTML = html;
   document.getElementById('prev-month').onclick = () => { gotoMonth(-1); };
   document.getElementById('next-month').onclick = () => { gotoMonth(1); };
@@ -615,6 +622,7 @@ function escAttr(s) { return escHtml(s); }
     if (!SETTINGS.slot_interval) SETTINGS.slot_interval = 15;
     if (typeof SETTINGS.accept_until_days_before !== 'number') SETTINGS.accept_until_days_before = 1;
     // max_tables / max_seats は両方 null/未設定でも OK（容量制約なしモード）
+    if (typeof SETTINGS.max_seats === 'number' && SETTINGS.max_seats > 0) MAX_PARTY = SETTINGS.max_seats;
 
     const today = todayStart();
     calMonth = { year: today.getFullYear(), month: today.getMonth() };
