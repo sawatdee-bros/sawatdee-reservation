@@ -90,6 +90,10 @@ main { padding: 14px; max-width: 600px; margin: 0 auto; }
 .course-card .course-card-img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: block; }
 .course-card.no-course .course-card-name { color: #6b7280; }
 .course-card.no-course .course-card-price { display: none; }
+.course-card.disabled { opacity: 0.55; cursor: not-allowed; background: #fafaf7; }
+.course-card.disabled:hover { border-color: #e5e7eb; }
+.course-card .course-card-min { font-size: 11px; color: #c2410c; margin-top: 2px; font-weight: 600; }
+.course-card .course-card-min .shortage { color: #b91c1c; margin-left: 4px; }
 
 /* ----- 入力フォーム ----- */
 .input-row { margin-bottom: 12px; }
@@ -187,7 +191,7 @@ async function fbRestGet(path, timeoutMs) {
 let SETTINGS = null;
 let COURSES = []; // [{id, name, price, description, image_url, sort_order}] (active=trueのみ)
 let step = 1;
-const sel = { date: null, party: 2, start: null, course_id: null, course_name: null, name: '', phone: '', email: '', note: '' };
+const sel = { date: null, party: 2, child_count: 0, start: null, course_id: null, course_name: null, name: '', phone: '', email: '', note: '' };
 let calMonth = null; // {year, month}（0始まり）
 let dayBookings = {}; // {YYYY-MM-DD: [{start_time, end_time, party_size, status}, ...]}
 let confirmedNo = null;
@@ -370,10 +374,12 @@ function render() {
 function renderStep1() {
   $main.innerHTML = '<div id="cal-card" class="card"></div>'
     + '<div id="party-card" class="card"></div>'
+    + '<div id="child-card" class="card"></div>'
     + '<div id="time-card" class="card"></div>'
     + '<div id="cta-area"></div>';
   renderCalendar();
   renderParty();
+  renderChild();
   renderTime();
   renderCta();
 }
@@ -469,11 +475,38 @@ function renderParty() {
   c.querySelectorAll('[data-p]').forEach(el => {
     el.addEventListener('click', () => {
       sel.party = parseInt(el.dataset.p);
+      // 人数変更時はお子様人数を 0 にリセット（合計人数を超えないように）
+      if (sel.child_count > sel.party) sel.child_count = 0;
       sel.start = null;
       renderCalendar();
       renderParty();
+      renderChild();
       renderTime();
       renderCta();
+    });
+  });
+}
+
+function renderChild() {
+  const c = document.getElementById('child-card');
+  if (!sel.party || sel.party < 1) { c.style.display = 'none'; return; }
+  c.style.display = '';
+  let html = '<div class="card-title">🧒 うちお子様</div>'
+    + '<div style="font-size:11px;color:#9ca3af;margin:-6px 0 8px">小学生以下（お席のご用意の参考にいたします）</div>'
+    + '<div class="scroll-row">';
+  // 0 〜 選択人数 の範囲。party=1 なら 0 のみ。
+  const max = Math.max(0, sel.party);
+  for (let k = 0; k <= max; k++) {
+    const cls = ['chip'];
+    if (sel.child_count === k) cls.push('selected');
+    html += '<button class="' + cls.join(' ') + '" data-ck="' + k + '">' + k + '名</button>';
+  }
+  html += '</div>';
+  c.innerHTML = html;
+  c.querySelectorAll('[data-ck]').forEach(el => {
+    el.addEventListener('click', () => {
+      sel.child_count = parseInt(el.dataset.ck);
+      renderChild();
     });
   });
 }
@@ -537,11 +570,17 @@ function renderStepCourse() {
     + '</div>';
   COURSES.forEach(c => {
     const selected = sel.course_id === c.id;
-    html += '<div class="course-card' + (selected ? ' selected' : '') + '" data-cid="' + escAttr(c.id) + '">'
+    const minP = (typeof c.min_party === 'number' && c.min_party > 1) ? c.min_party : 1;
+    const partyShortage = sel.party < minP;
+    const cls = ['course-card'];
+    if (selected) cls.push('selected');
+    if (partyShortage) cls.push('disabled');
+    html += '<div class="' + cls.join(' ') + '" data-cid="' + escAttr(c.id) + '"' + (partyShortage ? ' data-disabled="1"' : '') + '>'
       + '<div class="course-card-head">'
       + '<div class="course-card-name">' + escHtml(c.name) + '</div>'
       + '<div class="course-card-price">' + (c.price > 0 ? '¥' + c.price.toLocaleString() : '') + '</div>'
       + '</div>'
+      + (minP > 1 ? '<div class="course-card-min">' + minP + '名様以上〜' + (partyShortage ? '<span class="shortage">（現在 ' + sel.party + '名）</span>' : '') + '</div>' : '')
       + (c.description ? '<div class="course-card-desc">' + escHtml(c.description) + '</div>' : '')
       + (c.image_url ? '<img class="course-card-img" src="' + escAttr(c.image_url) + '" alt="' + escAttr(c.name) + '" loading="lazy">' : '')
       + '</div>';
@@ -552,6 +591,7 @@ function renderStepCourse() {
   $main.innerHTML = html;
   $main.querySelectorAll('.course-card').forEach(el => {
     el.addEventListener('click', () => {
+      if (el.dataset.disabled === '1') return; // 最少人数未達は無視
       const cid = el.dataset.cid;
       if (cid === '') {
         sel.course_id = null;
@@ -579,7 +619,7 @@ function renderStepContact() {
     + '<div class="card-title">✅ ご予約内容</div>'
     + '<div class="summary-row"><div class="summary-label">日付</div><div class="summary-value">' + sel.date + '</div></div>'
     + '<div class="summary-row"><div class="summary-label">時刻</div><div class="summary-value">' + sel.start + '（〜' + endTime + '頃）</div></div>'
-    + '<div class="summary-row"><div class="summary-label">人数</div><div class="summary-value">' + sel.party + '名</div></div>'
+    + '<div class="summary-row"><div class="summary-label">人数</div><div class="summary-value">' + sel.party + '名' + (sel.child_count > 0 ? '（うちお子様 ' + sel.child_count + '名）' : '') + '</div></div>'
     + (sel.course_id ? '<div class="summary-row"><div class="summary-label">コース</div><div class="summary-value">' + escHtml(sel.course_name) + '</div></div>' : '')
     + '</div>'
     + '<div class="card">'
@@ -638,6 +678,7 @@ window.__submit = async function() {
       time_slot: sel.start + '-' + endTime,
       stay_minutes: stay,
       party_size: sel.party,
+      child_count: sel.child_count > 0 ? sel.child_count : null,
       name: sel.name,
       phone: sel.phone,
       email: sel.email,

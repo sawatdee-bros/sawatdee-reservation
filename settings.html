@@ -473,6 +473,8 @@ function renderCourses() {
       + '<input class="slot-input course-name" type="text" placeholder="コース名" value="' + escAttr(course.name) + '" data-k="name" maxlength="80">'
       + '<input class="slot-input course-price" type="number" min="0" max="999999" placeholder="価格" value="' + (typeof course.price === 'number' ? course.price : '') + '" data-k="price">'
       + '<span style="font-size:13px;color:#64748b">円</span>'
+      + '<input class="slot-input course-min-party" type="number" min="1" max="99" placeholder="1" value="' + (typeof course.min_party === 'number' && course.min_party > 1 ? course.min_party : '') + '" data-k="min_party" style="width:60px;text-align:right">'
+      + '<span style="font-size:13px;color:#64748b">名〜</span>'
       + '<label class="course-active-label"><input type="checkbox" data-k="active"' + (course.active === false ? '' : ' checked') + '>有効</label>'
       + '<button class="icon-btn" data-rm="' + escAttr(course.id) + '" title="削除">×</button>'
       + '</div>'
@@ -491,6 +493,9 @@ function renderCourses() {
         e.target.closest('.course-row').classList.toggle('disabled', !target.active);
       } else if (k === 'price') {
         target.price = Math.max(0, parseInt(e.target.value) || 0);
+      } else if (k === 'min_party') {
+        const v = parseInt(e.target.value);
+        target.min_party = (v && v > 1) ? v : 1;
       } else {
         target[k] = (e.target.value || '').trim();
       }
@@ -512,7 +517,7 @@ window.addCourse = function() {
   const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   courses.push({
     id, name: '', price: 0, description: '', image_url: '',
-    active: true, sort_order: courses.length + 1
+    min_party: 1, active: true, sort_order: courses.length + 1
   });
   renderCourses();
 };
@@ -611,6 +616,7 @@ window.saveAll = async function() {
         price: typeof c.price === 'number' ? c.price : 0,
         description: c.description || '',
         image_url: c.image_url || '',
+        min_party: (typeof c.min_party === 'number' && c.min_party > 1) ? c.min_party : 1,
         active: c.active !== false,
         sort_order: i + 1
       };
@@ -639,6 +645,7 @@ window.saveAll = async function() {
       price: typeof coursesData[id].price === 'number' ? coursesData[id].price : 0,
       description: coursesData[id].description || '',
       image_url: coursesData[id].image_url || '',
+      min_party: (typeof coursesData[id].min_party === 'number' && coursesData[id].min_party > 1) ? coursesData[id].min_party : 1,
       active: coursesData[id].active !== false,
       sort_order: typeof coursesData[id].sort_order === 'number' ? coursesData[id].sort_order : 999
     }));
