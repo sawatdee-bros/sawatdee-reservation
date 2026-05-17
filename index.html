@@ -79,6 +79,18 @@ main { padding: 14px; max-width: 600px; margin: 0 auto; }
 
 .placeholder-msg { padding: 18px 12px; text-align: center; color: #9ca3af; font-size: 13px; }
 
+/* ----- コースカード ----- */
+.course-card { border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 14px; cursor: pointer; transition: 0.12s; background: white; margin-bottom: 10px; }
+.course-card:hover { border-color: #166534; }
+.course-card.selected { border-color: #166534; background: #f0fdf4; box-shadow: 0 0 0 2px rgba(22, 101, 52, 0.15); }
+.course-card .course-card-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.course-card .course-card-name { font-size: 15px; font-weight: 700; color: #1f2937; flex: 1; }
+.course-card .course-card-price { font-size: 14px; font-weight: 700; color: #166534; white-space: nowrap; }
+.course-card .course-card-desc { font-size: 12px; color: #6b7280; line-height: 1.5; margin-top: 4px; white-space: pre-wrap; }
+.course-card .course-card-img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: block; }
+.course-card.no-course .course-card-name { color: #6b7280; }
+.course-card.no-course .course-card-price { display: none; }
+
 /* ----- 入力フォーム ----- */
 .input-row { margin-bottom: 12px; }
 .input-row label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
@@ -129,8 +141,9 @@ main { padding: 14px; max-width: 600px; margin: 0 auto; }
 
 <div class="steps-bar" id="steps-bar">
   <div class="step-pill active" data-step="1">日時・人数</div>
-  <div class="step-pill" data-step="2">ご連絡先</div>
-  <div class="step-pill" data-step="3">完了</div>
+  <div class="step-pill" data-step="2">コース</div>
+  <div class="step-pill" data-step="3">ご連絡先</div>
+  <div class="step-pill" data-step="4">完了</div>
 </div>
 
 <main id="main">
@@ -172,8 +185,9 @@ async function fbRestGet(path, timeoutMs) {
 
 // ---- 状態 ----
 let SETTINGS = null;
+let COURSES = []; // [{id, name, price, description, image_url, sort_order}] (active=trueのみ)
 let step = 1;
-const sel = { date: null, party: 2, start: null, name: '', phone: '', email: '', note: '' };
+const sel = { date: null, party: 2, start: null, course_id: null, course_name: null, name: '', phone: '', email: '', note: '' };
 let calMonth = null; // {year, month}（0始まり）
 let dayBookings = {}; // {YYYY-MM-DD: [{start_time, end_time, party_size, status}, ...]}
 let confirmedNo = null;
@@ -347,8 +361,9 @@ async function loadMonthBookings(year, month) {
 // ---- 描画 ----
 function render() {
   if (step === 1) renderStep1();
-  else if (step === 2) renderStep2();
-  else if (step === 3) renderDone();
+  else if (step === 2) renderStepCourse();
+  else if (step === 3) renderStepContact();
+  else if (step === 4) renderDone();
   window.scrollTo(0, 0);
 }
 
@@ -502,15 +517,62 @@ function renderTime() {
 function renderCta() {
   const c = document.getElementById('cta-area');
   const ready = sel.date && sel.party && sel.start;
-  c.innerHTML = '<button class="cta" ' + (ready ? '' : 'disabled') + ' onclick="window.__toContact()">ご連絡先入力へ →</button>';
+  c.innerHTML = '<button class="cta" ' + (ready ? '' : 'disabled') + ' onclick="window.__toCourse()">' + (COURSES.length > 0 ? 'コース選択へ' : 'ご連絡先入力へ') + ' →</button>';
 }
 
-window.__toContact = function() {
+window.__toCourse = function() {
   if (!sel.date || !sel.party || !sel.start) return;
-  setStep(2);
+  // コースが無い場合はコース画面をスキップして連絡先へ
+  setStep(COURSES.length > 0 ? 2 : 3);
 };
 
-function renderStep2() {
+function renderStepCourse() {
+  let html = '<div class="card"><div class="card-title">🍽 コース選択</div>'
+    + '<div class="desc" style="font-size:12px;color:#6b7280;margin-bottom:10px">ご希望のコースをお選びください。指定しない場合は「コース指定なし」を選択。</div>';
+  // 「コース指定なし」を一番上に
+  const noneSelected = sel.course_id == null;
+  html += '<div class="course-card no-course' + (noneSelected ? ' selected' : '') + '" data-cid="">'
+    + '<div class="course-card-head"><div class="course-card-name">コース指定なし（席のみ予約）</div></div>'
+    + '<div class="course-card-desc">当日その場でメニューからお選びいただけます。</div>'
+    + '</div>';
+  COURSES.forEach(c => {
+    const selected = sel.course_id === c.id;
+    html += '<div class="course-card' + (selected ? ' selected' : '') + '" data-cid="' + escAttr(c.id) + '">'
+      + '<div class="course-card-head">'
+      + '<div class="course-card-name">' + escHtml(c.name) + '</div>'
+      + '<div class="course-card-price">' + (c.price > 0 ? '¥' + c.price.toLocaleString() : '') + '</div>'
+      + '</div>'
+      + (c.description ? '<div class="course-card-desc">' + escHtml(c.description) + '</div>' : '')
+      + (c.image_url ? '<img class="course-card-img" src="' + escAttr(c.image_url) + '" alt="' + escAttr(c.name) + '" loading="lazy">' : '')
+      + '</div>';
+  });
+  html += '</div>';
+  html += '<button class="cta" onclick="window.__toContactFromCourse()">ご連絡先入力へ →</button>';
+  html += '<button class="cta secondary" onclick="window.__back(1)">← 日時・人数に戻る</button>';
+  $main.innerHTML = html;
+  $main.querySelectorAll('.course-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const cid = el.dataset.cid;
+      if (cid === '') {
+        sel.course_id = null;
+        sel.course_name = null;
+      } else {
+        const found = COURSES.find(x => x.id === cid);
+        if (found) {
+          sel.course_id = cid;
+          sel.course_name = found.name;
+        }
+      }
+      renderStepCourse();
+    });
+  });
+}
+
+window.__toContactFromCourse = function() {
+  setStep(3);
+};
+
+function renderStepContact() {
   const storePhone = (SETTINGS.store_info && SETTINGS.store_info.phone) ? SETTINGS.store_info.phone : '';
   const endTime = minToHhmm(hhmmToMin(sel.start) + SETTINGS.stay_minutes);
   let html = '<div class="card">'
@@ -518,6 +580,7 @@ function renderStep2() {
     + '<div class="summary-row"><div class="summary-label">日付</div><div class="summary-value">' + sel.date + '</div></div>'
     + '<div class="summary-row"><div class="summary-label">時刻</div><div class="summary-value">' + sel.start + '（〜' + endTime + '頃）</div></div>'
     + '<div class="summary-row"><div class="summary-label">人数</div><div class="summary-value">' + sel.party + '名</div></div>'
+    + (sel.course_id ? '<div class="summary-row"><div class="summary-label">コース</div><div class="summary-value">' + escHtml(sel.course_name) + '</div></div>' : '')
     + '</div>'
     + '<div class="card">'
     + '<div class="card-title">📝 ご連絡先</div>'
@@ -535,12 +598,13 @@ function renderStep2() {
     + '<div id="form-error"></div>'
     + '<button class="cta" id="confirm-btn" onclick="window.__submit()">この内容で予約する</button>'
     + '</div>'
-    + '<button class="cta secondary" onclick="window.__back()">← 戻る</button>'
+    + '<button class="cta secondary" onclick="window.__backFromContact()">← 戻る</button>'
     + '<div class="legal-note">予約確定後、お店から確認連絡が入る場合があります。<br>予約変更・キャンセルはお電話でお願いします。</div>';
   $main.innerHTML = html;
 }
 
-window.__back = () => setStep(1);
+window.__back = (n) => setStep(n || 1);
+window.__backFromContact = () => setStep(COURSES.length > 0 ? 2 : 1);
 
 window.__submit = async function() {
   const btn = document.getElementById('confirm-btn');
@@ -578,13 +642,15 @@ window.__submit = async function() {
       phone: sel.phone,
       email: sel.email,
       note: sel.note || null,
+      course_id: sel.course_id || null,
+      course_name: sel.course_name || null,
       status: 'pending',
       created_at: Date.now()
     };
     Object.keys(payload).forEach(k => { if (payload[k] === null) delete payload[k]; });
     await set(node, payload);
     confirmedNo = id.slice(-6).toUpperCase();
-    setStep(3);
+    setStep(4);
   } catch (e) {
     err.innerHTML = '<div class="error">' + escHtml(e.message) + '</div>';
     btn.disabled = false; btn.textContent = 'この内容で予約する';
@@ -612,12 +678,21 @@ function escAttr(s) { return escHtml(s); }
 
 (async function init() {
   try {
-    const settings = await fbRestGet('tenants/' + TENANT_ID + '/reservation_settings');
+    const [settings, coursesData] = await Promise.all([
+      fbRestGet('tenants/' + TENANT_ID + '/reservation_settings'),
+      fbRestGet('tenants/' + TENANT_ID + '/courses')
+    ]);
     if (!settings || !settings.business_hours_by_dow) {
       $loading.innerHTML = '<div class="error">予約受付の設定がまだ完了していません。<br>店舗にお電話でお問い合わせください。</div>';
       return;
     }
     SETTINGS = settings;
+    if (coursesData && typeof coursesData === 'object') {
+      COURSES = Object.keys(coursesData)
+        .map(id => Object.assign({ id }, coursesData[id]))
+        .filter(c => c.active !== false && c.name)
+        .sort((a, b) => (a.sort_order || 999) - (b.sort_order || 999));
+    }
     if (!SETTINGS.stay_minutes) SETTINGS.stay_minutes = 120;
     if (!SETTINGS.slot_interval) SETTINGS.slot_interval = 15;
     if (typeof SETTINGS.accept_until_days_before !== 'number') SETTINGS.accept_until_days_before = 1;

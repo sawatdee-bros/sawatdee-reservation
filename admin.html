@@ -520,6 +520,7 @@ function renderCard(b) {
     + '<dt>お名前</dt><dd>' + escHtml(b.name || '') + '</dd>'
     + '<dt>電話</dt><dd>' + (phone ? '<a href="tel:' + escHtml(phoneHref) + '">' + escHtml(phone) + '</a>' : '—') + '</dd>'
     + '<dt>メール</dt><dd>' + (email ? '<a href="mailto:' + escHtml(email) + '">' + escHtml(email) + '</a>' + mailStatusBadge(b) : '—') + '</dd>'
+    + (b.course_name ? '<dt>コース</dt><dd>' + escHtml(b.course_name) + '</dd>' : '')
     + (b.note ? '<dt>要望</dt><dd class="note">' + escHtml(b.note) + '</dd>' : '')
     + '</dl>'
     + '<div class="r-actions">' + actions + '</div>'

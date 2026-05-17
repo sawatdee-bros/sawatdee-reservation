@@ -79,6 +79,22 @@ select.field-input { padding-right: 26px; }
 .radio-group label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-size: 13px; color: #cbd5e1; user-select: none; }
 .radio-group input[type="radio"] { accent-color: #166534; }
 .radio-group label:has(input:checked) { background: #166534; color: white; border-color: #166534; }
+
+.course-row { padding: 12px 16px; border-bottom: 1px solid #334155; }
+.course-row:last-of-type { border-bottom: none; }
+.course-row .course-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.course-row .course-name { flex: 1; min-width: 140px; }
+.course-row .course-price { width: 100px; text-align: right; }
+.course-row .course-active-label { font-size: 12px; color: #cbd5e1; display: inline-flex; gap: 4px; align-items: center; user-select: none; cursor: pointer; }
+.course-row .course-active-label input { accent-color: #166534; }
+.course-row textarea.course-desc { width: 100%; min-height: 50px; margin-bottom: 6px; resize: vertical; padding: 6px 8px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; font-family: inherit; font-size: 13px; }
+.course-row textarea.course-desc:focus { outline: none; border-color: #166534; }
+.course-row .course-image { width: 100%; padding: 6px 8px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; font-size: 12px; }
+.course-row .course-image:focus { outline: none; border-color: #166534; }
+.course-row.disabled .course-name,
+.course-row.disabled .course-price,
+.course-row.disabled .course-desc,
+.course-row.disabled .course-image { opacity: 0.55; }
 </style>
 </head>
 <body>
@@ -195,6 +211,15 @@ select.field-input { padding-right: 26px; }
   </div>
 
   <div class="section">
+    <div class="section-title">コース管理</div>
+    <div class="card">
+      <div id="course-list"></div>
+      <button class="add-btn" onclick="addCourse()">＋ コースを追加</button>
+      <div class="note">客向け予約画面の「コース選択」に表示。<br>「有効」をオフにすると客向け画面では非表示になる（既存予約のコース名は履歴保持される）。</div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-title">店舗情報（メール本文に使用）</div>
     <div class="card">
       <div class="field-row">
@@ -253,9 +278,13 @@ const FC = {
 };
 const TENANT_ID = 'sawatdee-bros';
 const SETTINGS_PATH = 'tenants/' + TENANT_ID + '/reservation_settings';
+const COURSES_PATH = 'tenants/' + TENANT_ID + '/courses';
 
 const app = initializeApp(FC);
 const db = getDatabase(app);
+
+function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escAttr(s) { return escHtml(s); }
 
 const DOWS = [
   { key: 0, label: '日', cls: 'sun' },
@@ -293,6 +322,7 @@ const DEFAULTS = {
 let state = JSON.parse(JSON.stringify(DEFAULTS));
 state.store_info = Object.assign({ phone:'', address:'', reply_email:'' }, state.store_info);
 let currentDow = 3; // 水曜デフォルト
+let courses = []; // [{id, name, price, description, image_url, active, sort_order}, ...]
 
 function showToast(msg, kind) {
   const t = document.getElementById('toast');
@@ -425,6 +455,68 @@ document.getElementById('closed-dow-check').addEventListener('change', e => {
   renderDowPanel();
 });
 
+// ===== コース管理 =====
+function renderCourses() {
+  const c = document.getElementById('course-list');
+  if (!c) return;
+  if (courses.length === 0) {
+    c.innerHTML = '<div class="empty">コースが登録されていません。「コースを追加」から登録してください。</div>';
+    return;
+  }
+  c.innerHTML = '';
+  courses.forEach((course) => {
+    const row = document.createElement('div');
+    row.className = 'course-row' + (course.active === false ? ' disabled' : '');
+    row.dataset.id = course.id;
+    row.innerHTML =
+      '<div class="course-head">'
+      + '<input class="slot-input course-name" type="text" placeholder="コース名" value="' + escAttr(course.name) + '" data-k="name" maxlength="80">'
+      + '<input class="slot-input course-price" type="number" min="0" max="999999" placeholder="価格" value="' + (typeof course.price === 'number' ? course.price : '') + '" data-k="price">'
+      + '<span style="font-size:13px;color:#64748b">円</span>'
+      + '<label class="course-active-label"><input type="checkbox" data-k="active"' + (course.active === false ? '' : ' checked') + '>有効</label>'
+      + '<button class="icon-btn" data-rm="' + escAttr(course.id) + '" title="削除">×</button>'
+      + '</div>'
+      + '<textarea class="course-desc" placeholder="コース説明（任意・客向け画面に表示）" data-k="description" maxlength="500">' + escHtml(course.description) + '</textarea>'
+      + '<input class="course-image" type="url" placeholder="写真URL（任意・https://...）" value="' + escAttr(course.image_url) + '" data-k="image_url" maxlength="500">';
+    c.appendChild(row);
+  });
+  c.querySelectorAll('input[data-k], textarea[data-k]').forEach(el => {
+    el.addEventListener('change', e => {
+      const id = e.target.closest('.course-row').dataset.id;
+      const target = courses.find(x => x.id === id);
+      if (!target) return;
+      const k = e.target.dataset.k;
+      if (k === 'active') {
+        target.active = e.target.checked;
+        e.target.closest('.course-row').classList.toggle('disabled', !target.active);
+      } else if (k === 'price') {
+        target.price = Math.max(0, parseInt(e.target.value) || 0);
+      } else {
+        target[k] = (e.target.value || '').trim();
+      }
+    });
+  });
+  c.querySelectorAll('button[data-rm]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = e.currentTarget.dataset.rm;
+      const target = courses.find(x => x.id === id);
+      if (!target) return;
+      if (!confirm('コース「' + (target.name || '無名') + '」を削除しますか？\n（保存ボタンを押すまでは取り消し可）')) return;
+      courses = courses.filter(x => x.id !== id);
+      renderCourses();
+    });
+  });
+}
+
+window.addCourse = function() {
+  const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  courses.push({
+    id, name: '', price: 0, description: '', image_url: '',
+    active: true, sort_order: courses.length + 1
+  });
+  renderCourses();
+};
+
 function renderClosedDates() {
   const c = document.getElementById('closed-container');
   if (state.closed_dates.length === 0) {
@@ -509,6 +601,22 @@ window.saveAll = async function() {
     if (Object.keys(state.store_info).length > 0) payload.store_info = state.store_info;
     if (state.email_endpoint) payload.email_endpoint = state.email_endpoint;
     await set(ref(db, SETTINGS_PATH), payload);
+
+    // コースを保存（別ノード）
+    const coursesPayload = {};
+    courses.forEach((c, i) => {
+      if (!c.name) return; // 名前空欄は除外
+      coursesPayload[c.id] = {
+        name: c.name,
+        price: typeof c.price === 'number' ? c.price : 0,
+        description: c.description || '',
+        image_url: c.image_url || '',
+        active: c.active !== false,
+        sort_order: i + 1
+      };
+    });
+    await set(ref(db, COURSES_PATH), Object.keys(coursesPayload).length > 0 ? coursesPayload : null);
+
     showToast('✓ 保存しました');
   } catch (e) {
     showToast('保存失敗: ' + e.message, 'error');
@@ -519,8 +627,22 @@ window.saveAll = async function() {
 
 (async function init() {
   try {
-    const snap = await get(ref(db, SETTINGS_PATH));
+    const [snap, coursesSnap] = await Promise.all([
+      get(ref(db, SETTINGS_PATH)),
+      get(ref(db, COURSES_PATH))
+    ]);
     const cfg = snap.val();
+    const coursesData = coursesSnap.val() || {};
+    courses = Object.keys(coursesData).map(id => ({
+      id,
+      name: coursesData[id].name || '',
+      price: typeof coursesData[id].price === 'number' ? coursesData[id].price : 0,
+      description: coursesData[id].description || '',
+      image_url: coursesData[id].image_url || '',
+      active: coursesData[id].active !== false,
+      sort_order: typeof coursesData[id].sort_order === 'number' ? coursesData[id].sort_order : 999
+    }));
+    courses.sort((a, b) => a.sort_order - b.sort_order);
     if (cfg && cfg.business_hours_by_dow) {
       const byDow = cfg.business_hours_by_dow || {};
       const merged = { '0':[], '1':[], '2':[], '3':[], '4':[], '5':[], '6':[] };
@@ -564,6 +686,7 @@ window.saveAll = async function() {
     renderTabs();
     renderDowPanel();
     renderClosedDates();
+    renderCourses();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('main').style.display = 'block';
   } catch (e) {
