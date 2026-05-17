@@ -123,21 +123,19 @@ select.field-input { padding-right: 26px; }
     <div class="card">
       <div class="field-row">
         <div class="field-label">
-          受入容量の管理単位
-          <div class="field-sub">予約の混雑判定をどう数えるか</div>
+          最大卓数（同時受入組数）
+          <div class="field-sub">空欄なら卓数制約なし</div>
         </div>
-        <div class="radio-group">
-          <label><input type="radio" name="capacity-mode" value="tables">卓数</label>
-          <label><input type="radio" name="capacity-mode" value="seats">席数</label>
-        </div>
+        <input id="max-tables" class="field-input" type="number" min="1" max="999" style="width:90px;text-align:right" placeholder="例: 6">
+        <span style="font-size:13px;color:#64748b">卓</span>
       </div>
       <div class="field-row">
         <div class="field-label">
-          受入容量
-          <div class="field-sub" id="capacity-sub">同時に受け入れ可能な数</div>
+          最大席数（同時受入合計人数）
+          <div class="field-sub">空欄なら席数制約なし</div>
         </div>
-        <input id="capacity" class="field-input" type="number" min="1" max="999" style="width:90px;text-align:right">
-        <span style="font-size:13px;color:#64748b" id="capacity-unit">卓</span>
+        <input id="max-seats" class="field-input" type="number" min="1" max="999" style="width:90px;text-align:right" placeholder="例: 25">
+        <span style="font-size:13px;color:#64748b">席</span>
       </div>
       <div class="field-row">
         <div class="field-label">
@@ -165,7 +163,7 @@ select.field-input { padding-right: 26px; }
           <option value="60">60分</option>
         </select>
       </div>
-      <div class="note">在庫判定ロジック：客が選んだ開始時刻 X の時、「X−滞在時間+刻み幅 〜 X+滞在時間」の範囲に重なる既存予約数（卓モード=組数 / 席モード=人数合計）が、受入容量を超えなければ予約可。</div>
+      <div class="note">在庫判定ロジック：客が選んだ開始時刻 X の時、「X−滞在時間+刻み幅 〜 X+滞在時間」の範囲に重なる既存予約のうち、<br>・組数が「最大卓数」以下<br>・合計人数が「最大席数」以下<br>の両方を満たせば予約可。両方とも空欄なら容量制約なし（営業時間内は無制限）。</div>
     </div>
   </div>
 
@@ -187,11 +185,12 @@ select.field-input { padding-right: 26px; }
       <div class="field-row">
         <div class="field-label">
           受付期限
-          <div class="field-sub">来店時刻の何分前まで予約可能か</div>
+          <div class="field-sub">来店日の何日前まで予約可能か。0なら当日も来店時刻まで受付</div>
         </div>
-        <input id="accept-minutes" class="field-input" type="number" min="0" max="1440" step="15" style="width:90px;text-align:right">
-        <span style="font-size:13px;color:#64748b">分前</span>
+        <input id="accept-days" class="field-input" type="number" min="0" max="60" style="width:90px;text-align:right">
+        <span style="font-size:13px;color:#64748b">日前まで</span>
       </div>
+      <div class="note">例: <strong>1</strong>=前日24:00まで（当日不可）／<strong>0</strong>=当日も来店時刻まで受付／<strong>2</strong>=2日前24:00まで</div>
     </div>
   </div>
 
@@ -282,11 +281,11 @@ const DEFAULTS = {
   },
   closed_dows: [1, 2],
   closed_dates: [],
-  capacity_mode: 'tables',
-  capacity: 6,
+  max_tables: 6,
+  max_seats: 25,
   stay_minutes: 120,
   slot_interval: 15,
-  accept_until_minutes_before: 60,
+  accept_until_days_before: 1,
   store_info: { phone: '044-777-6759', address: '神奈川県川崎市中原区上小田中5-3-10' },
   email_endpoint: ''
 };
@@ -426,16 +425,6 @@ document.getElementById('closed-dow-check').addEventListener('change', e => {
   renderDowPanel();
 });
 
-function updateCapacityUnit() {
-  const mode = document.querySelector('input[name="capacity-mode"]:checked').value;
-  document.getElementById('capacity-unit').textContent = mode === 'tables' ? '卓' : '席';
-  document.getElementById('capacity-sub').textContent =
-    mode === 'tables' ? '同時に受け入れ可能な卓数（組数）' : '同時に受け入れ可能な総席数（合計人数）';
-}
-document.querySelectorAll('input[name="capacity-mode"]').forEach(el => {
-  el.addEventListener('change', updateCapacityUnit);
-});
-
 function renderClosedDates() {
   const c = document.getElementById('closed-container');
   if (state.closed_dates.length === 0) {
@@ -473,11 +462,13 @@ window.saveAll = async function() {
   const btn = document.getElementById('save-btn');
   btn.disabled = true;
   try {
-    state.accept_until_minutes_before = Math.max(0, parseInt(document.getElementById('accept-minutes').value) || 0);
-    state.capacity = Math.max(1, parseInt(document.getElementById('capacity').value) || 1);
+    state.accept_until_days_before = Math.max(0, parseInt(document.getElementById('accept-days').value) || 0);
+    const maxTablesRaw = document.getElementById('max-tables').value;
+    const maxSeatsRaw = document.getElementById('max-seats').value;
+    state.max_tables = maxTablesRaw === '' ? null : Math.max(1, parseInt(maxTablesRaw) || 1);
+    state.max_seats = maxSeatsRaw === '' ? null : Math.max(1, parseInt(maxSeatsRaw) || 1);
     state.stay_minutes = parseInt(document.getElementById('stay-minutes').value) || 120;
     state.slot_interval = parseInt(document.getElementById('slot-interval').value) || 15;
-    state.capacity_mode = document.querySelector('input[name="capacity-mode"]:checked').value;
     state.store_info = {
       phone: (document.getElementById('store-phone').value || '').trim(),
       address: (document.getElementById('store-address').value || '').trim(),
@@ -509,12 +500,12 @@ window.saveAll = async function() {
       business_hours_by_dow: state.business_hours_by_dow,
       closed_dows: state.closed_dows,
       closed_dates: state.closed_dates,
-      capacity_mode: state.capacity_mode,
-      capacity: state.capacity,
       stay_minutes: state.stay_minutes,
       slot_interval: state.slot_interval,
-      accept_until_minutes_before: state.accept_until_minutes_before
+      accept_until_days_before: state.accept_until_days_before
     };
+    if (state.max_tables != null) payload.max_tables = state.max_tables;
+    if (state.max_seats != null) payload.max_seats = state.max_seats;
     if (Object.keys(state.store_info).length > 0) payload.store_info = state.store_info;
     if (state.email_endpoint) payload.email_endpoint = state.email_endpoint;
     await set(ref(db, SETTINGS_PATH), payload);
@@ -539,22 +530,31 @@ window.saveAll = async function() {
       state.business_hours_by_dow = merged;
       state.closed_dows = Array.isArray(cfg.closed_dows) ? cfg.closed_dows.slice() : [];
       state.closed_dates = Array.isArray(cfg.closed_dates) ? cfg.closed_dates.slice() : [];
-      state.capacity_mode = (cfg.capacity_mode === 'seats') ? 'seats' : 'tables';
-      state.capacity = (typeof cfg.capacity === 'number' && cfg.capacity > 0) ? cfg.capacity : 6;
+      // 既存 cfg に max_tables/max_seats が無い場合は DEFAULTS から補完
+      // （cfg.max_tables が null で明示的に保存されている場合のみ「制約なし」扱い）
+      if (Object.prototype.hasOwnProperty.call(cfg, 'max_tables')) {
+        state.max_tables = (typeof cfg.max_tables === 'number' && cfg.max_tables > 0) ? cfg.max_tables : null;
+      } else {
+        state.max_tables = DEFAULTS.max_tables;
+      }
+      if (Object.prototype.hasOwnProperty.call(cfg, 'max_seats')) {
+        state.max_seats = (typeof cfg.max_seats === 'number' && cfg.max_seats > 0) ? cfg.max_seats : null;
+      } else {
+        state.max_seats = DEFAULTS.max_seats;
+      }
       state.stay_minutes = (typeof cfg.stay_minutes === 'number' && cfg.stay_minutes > 0) ? cfg.stay_minutes : 120;
       state.slot_interval = (typeof cfg.slot_interval === 'number' && cfg.slot_interval > 0) ? cfg.slot_interval : 15;
-      state.accept_until_minutes_before = typeof cfg.accept_until_minutes_before === 'number' ? cfg.accept_until_minutes_before : 60;
+      state.accept_until_days_before = (typeof cfg.accept_until_days_before === 'number' && cfg.accept_until_days_before >= 0) ? cfg.accept_until_days_before : 1;
       state.store_info = (cfg.store_info && typeof cfg.store_info === 'object') ? Object.assign({ phone:'', address:'', reply_email:'' }, cfg.store_info) : { phone:'', address:'', reply_email:'' };
       state.email_endpoint = typeof cfg.email_endpoint === 'string' ? cfg.email_endpoint : '';
     }
-    // 旧スキーマ time_slots_by_dow しか無い場合はデフォルト値で初期化（本番運用前のため互換切る）
+    // 旧スキーマしか無い場合はデフォルト値で初期化（本番運用前のため互換切る）
 
-    document.getElementById('accept-minutes').value = state.accept_until_minutes_before;
-    document.getElementById('capacity').value = state.capacity;
+    document.getElementById('accept-days').value = state.accept_until_days_before;
+    document.getElementById('max-tables').value = state.max_tables == null ? '' : state.max_tables;
+    document.getElementById('max-seats').value = state.max_seats == null ? '' : state.max_seats;
     document.getElementById('stay-minutes').value = state.stay_minutes;
     document.getElementById('slot-interval').value = state.slot_interval;
-    document.querySelector('input[name="capacity-mode"][value="' + state.capacity_mode + '"]').checked = true;
-    updateCapacityUnit();
     document.getElementById('store-phone').value = state.store_info.phone || '';
     document.getElementById('store-address').value = state.store_info.address || '';
     document.getElementById('store-reply-email').value = state.store_info.reply_email || '';

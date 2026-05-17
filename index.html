@@ -239,13 +239,21 @@ function generateStartTimes(dateStr) {
 }
 
 function isStartPastDeadline(dateStr, startHHMM) {
-  const now = new Date();
-  const start = new Date(dateStr + 'T' + startHHMM + ':00');
-  const diffMin = (start.getTime() - now.getTime()) / 60000;
-  return diffMin < (SETTINGS.accept_until_minutes_before || 0);
+  const now = Date.now();
+  const start = new Date(dateStr + 'T' + startHHMM + ':00').getTime();
+  if (now >= start) return true; // 過去時刻は問答無用
+  const days = SETTINGS.accept_until_days_before;
+  if (typeof days !== 'number' || days <= 0) return false; // 0 or 未設定 → 来店時刻まで受付
+  // N日前まで = 「来店日の (N-1)*86400000 ms 前の 00:00」より前なら受付可
+  // 例: N=1 で 5/20 来店 → deadline = 5/20 00:00（つまり 5/19 24:00 まで OK）
+  // 例: N=2 で 5/20 来店 → deadline = 5/19 00:00（つまり 5/18 24:00 まで OK）
+  const dateStart = new Date(dateStr + 'T00:00:00').getTime();
+  const deadlineMs = dateStart - (days - 1) * 86400000;
+  return now >= deadlineMs;
 }
 
 // 開始時刻 X の予約が他の既存予約と重なって受入容量を超えるか
+// 卓数と席数の両方制約（AND）。いずれかの上限を超えたら unavailable。
 function isStartUnavailable(dateStr, startHHMM, partySize) {
   const stay = SETTINGS.stay_minutes;
   const xStart = hhmmToMin(startHHMM);
@@ -263,13 +271,11 @@ function isStartUnavailable(dateStr, startHHMM, partySize) {
       overlapSeats += (b.party_size || 1);
     }
   });
-  const mode = SETTINGS.capacity_mode || 'tables';
-  const cap = SETTINGS.capacity || 1;
-  if (mode === 'tables') {
-    return (overlapTables + 1) > cap;
-  } else {
-    return (overlapSeats + (partySize || 1)) > cap;
-  }
+  const maxT = SETTINGS.max_tables;
+  const maxS = SETTINGS.max_seats;
+  if (typeof maxT === 'number' && maxT > 0 && (overlapTables + 1) > maxT) return true;
+  if (typeof maxS === 'number' && maxS > 0 && (overlapSeats + (partySize || 1)) > maxS) return true;
+  return false;
 }
 
 // 日付ごとの「いずれかの開始時刻が予約可能か」判定
@@ -607,9 +613,8 @@ function escAttr(s) { return escHtml(s); }
     SETTINGS = settings;
     if (!SETTINGS.stay_minutes) SETTINGS.stay_minutes = 120;
     if (!SETTINGS.slot_interval) SETTINGS.slot_interval = 15;
-    if (!SETTINGS.capacity) SETTINGS.capacity = 4;
-    if (!SETTINGS.capacity_mode) SETTINGS.capacity_mode = 'tables';
-    if (typeof SETTINGS.accept_until_minutes_before !== 'number') SETTINGS.accept_until_minutes_before = 60;
+    if (typeof SETTINGS.accept_until_days_before !== 'number') SETTINGS.accept_until_days_before = 1;
+    // max_tables / max_seats は両方 null/未設定でも OK（容量制約なしモード）
 
     const today = todayStart();
     calMonth = { year: today.getFullYear(), month: today.getMonth() };
