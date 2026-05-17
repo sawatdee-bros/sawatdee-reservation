@@ -587,7 +587,7 @@ async function sendConfirmationMail(target, opts) {
   const timeSlotStr = (target.start_time && target.end_time)
     ? (target.start_time + '-' + target.end_time)
     : (target.start_time || '');
-  const body = JSON.stringify({
+  const mailPayload = {
     tenant_id: TENANT_ID,
     reservation_id: id,
     date: target.date,
@@ -596,7 +596,10 @@ async function sendConfirmationMail(target, opts) {
     email: target.email,
     name: target.name,
     reservation_no: reservationNo
-  });
+  };
+  if (target.course_name) mailPayload.course_name = target.course_name;
+  if (typeof target.child_count === 'number' && target.child_count > 0) mailPayload.child_count = target.child_count;
+  const body = JSON.stringify(mailPayload);
 
   let result = null;
   let errorText = '';
