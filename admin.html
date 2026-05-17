@@ -296,7 +296,7 @@ async function loadMonth(year, month) {
       if (date.indexOf(prefix) !== 0) return;
       const day = all[date] || {};
       const list = Object.keys(day).map(id => Object.assign({ id }, day[id]));
-      list.sort((a, b) => (a.time_slot || '').localeCompare(b.time_slot || ''));
+      list.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
       next[date] = list;
     });
     monthBookings = next;
@@ -512,7 +512,7 @@ function renderCard(b) {
   return '<div class="r-card ' + status + '">'
     + '<div class="r-id">#' + idShort + '</div>'
     + '<div class="r-head">'
-    + '<div class="r-time">' + escHtml(b.time_slot || '') + '</div>'
+    + '<div class="r-time">' + escHtml(b.start_time || '') + (b.end_time ? '<span style="font-size:13px;color:#94a3b8;font-weight:500;margin-left:4px">〜' + escHtml(b.end_time) + '</span>' : '') + '</div>'
     + '<div class="r-party">' + escHtml(b.party_size || '?') + '名</div>'
     + '<div class="r-status ' + status + '">' + (STATUS_LABELS[status] || status) + '</div>'
     + '</div>'
@@ -583,11 +583,14 @@ async function sendConfirmationMail(target, opts) {
 
   const id = target.id;
   const reservationNo = id.slice(-6).toUpperCase();
+  const timeSlotStr = (target.start_time && target.end_time)
+    ? (target.start_time + '-' + target.end_time)
+    : (target.start_time || '');
   const body = JSON.stringify({
     tenant_id: TENANT_ID,
     reservation_id: id,
     date: target.date,
-    time_slot: target.time_slot,
+    time_slot: timeSlotStr,
     party_size: target.party_size,
     email: target.email,
     name: target.name,

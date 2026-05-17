@@ -17,38 +17,63 @@ header h1 { font-size: 17px; font-weight: 700; flex: 1; letter-spacing: 0.02em; 
 .step-pill.active { background: #166534; color: white; }
 .step-pill.done { background: #d1fae5; color: #166534; }
 
-main { padding: 20px; max-width: 600px; margin: 0 auto; }
-.card { background: white; border-radius: 14px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid #e5e7eb; margin-bottom: 14px; }
-.card h2 { font-size: 15px; font-weight: 700; color: #166534; margin-bottom: 12px; }
-.card .desc { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+main { padding: 14px; max-width: 600px; margin: 0 auto; }
+.card { background: white; border-radius: 14px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid #e5e7eb; margin-bottom: 12px; }
+.card-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.card-title .pick-label { color: #166534; font-weight: 700; margin-left: auto; font-size: 13px; }
 
-.date-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.date-cell { padding: 10px 6px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; text-align: center; cursor: pointer; transition: 0.15s; }
-.date-cell:hover { border-color: #166534; }
-.date-cell.selected { background: #166534; color: white; border-color: #166534; }
-.date-cell.closed { background: #f3f4f6; color: #d1d5db; cursor: not-allowed; }
-.date-cell.closed:hover { border-color: #e5e7eb; }
-.date-cell .day-of-week { font-size: 11px; font-weight: 600; }
-.date-cell .day { font-size: 18px; font-weight: 700; line-height: 1.2; }
-.date-cell .month { font-size: 10px; opacity: 0.7; }
-.date-cell.sun .day-of-week { color: #dc2626; }
-.date-cell.sat .day-of-week { color: #2563eb; }
-.date-cell.selected .day-of-week, .date-cell.closed .day-of-week { color: inherit !important; }
+/* ----- カレンダー ----- */
+.month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.month-nav button { background: #f3f4f6; border: none; color: #166534; font-size: 18px; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: 700; }
+.month-nav button:disabled { color: #d1d5db; cursor: not-allowed; }
+.month-nav .month-label { font-size: 15px; font-weight: 700; color: #1f2937; }
 
-.slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.slot-cell { padding: 12px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; cursor: pointer; transition: 0.15s; text-align: left; }
-.slot-cell:hover { border-color: #166534; }
-.slot-cell.selected { background: #166534; color: white; border-color: #166534; }
-.slot-cell.full { background: #fef2f2; color: #b91c1c; cursor: not-allowed; border-color: #fecaca; }
-.slot-cell.closed { background: #f9fafb; color: #d1d5db; cursor: not-allowed; }
-.slot-time { font-size: 16px; font-weight: 700; line-height: 1.2; }
-.slot-status { font-size: 11px; margin-top: 4px; opacity: 0.8; }
+.cal-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
+.cal-head > div { text-align: center; font-size: 11px; font-weight: 700; padding: 4px 0; color: #6b7280; }
+.cal-head > div.sun { color: #dc2626; }
+.cal-head > div.sat { color: #2563eb; }
 
-.party-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-.party-cell { padding: 12px 6px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; cursor: pointer; text-align: center; font-weight: 700; font-size: 16px; }
-.party-cell:hover { border-color: #166534; }
-.party-cell.selected { background: #166534; color: white; border-color: #166534; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-cell { aspect-ratio: 1 / 1.15; border-radius: 8px; background: white; border: 1px solid #f3f4f6; padding: 4px 2px 2px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; transition: 0.1s; position: relative; }
+.cal-cell:hover { border-color: #166534; }
+.cal-cell.empty { visibility: hidden; }
+.cal-cell.past, .cal-cell.closed, .cal-cell.no-biz { color: #d1d5db; cursor: not-allowed; background: #fafaf7; }
+.cal-cell.past:hover, .cal-cell.closed:hover, .cal-cell.no-biz:hover { border-color: #f3f4f6; }
+.cal-cell.selected { background: #166534; color: white; border-color: #166534; }
+.cal-cell.selected .mark-circle { color: white; }
+.cal-cell.selected .holiday-tag, .cal-cell.selected .day-num { color: white !important; }
+.cal-cell .day-num { font-size: 14px; font-weight: 600; line-height: 1; }
+.cal-cell .mark { line-height: 1; margin-top: 2px; }
+.cal-cell .mark-circle { font-size: 18px; color: #f59e0b; font-weight: 700; line-height: 1; }
+.cal-cell .mark-x { font-size: 14px; color: #9ca3af; font-weight: 700; line-height: 1; }
+.cal-cell .mark-bar { font-size: 12px; color: #d1d5db; font-weight: 700; line-height: 1; }
+.cal-cell.sun .day-num { color: #dc2626; }
+.cal-cell.sat .day-num { color: #2563eb; }
+.cal-cell.holiday .day-num { color: #dc2626; }
+.cal-cell.past .day-num, .cal-cell.closed .day-num, .cal-cell.no-biz .day-num { color: #d1d5db !important; }
+.cal-cell .holiday-tag { font-size: 8px; color: #dc2626; line-height: 1; margin-top: 1px; overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ----- 人数・時刻 横スクロール ----- */
+.scroll-row { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.scroll-row::-webkit-scrollbar { height: 4px; }
+.scroll-row::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+.chip { flex-shrink: 0; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 999px; background: white; cursor: pointer; font-size: 14px; font-weight: 600; color: #1f2937; min-width: 64px; text-align: center; transition: 0.1s; display: inline-flex; align-items: center; gap: 4px; justify-content: center; }
+.chip:hover { border-color: #166534; }
+.chip.selected { background: #166534; color: white; border-color: #166534; }
+.chip.unavailable { color: #9ca3af; background: #f9fafb; cursor: not-allowed; }
+.chip.unavailable:hover { border-color: #e5e7eb; }
+.chip .chip-mark { font-size: 14px; color: #f59e0b; font-weight: 700; }
+.chip .chip-mark.x { color: #9ca3af; }
+.chip.selected .chip-mark { color: white; }
+
+.time-chip { padding: 10px 14px; min-width: 70px; font-size: 15px; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; font-weight: 700; }
+.time-chip:hover { border-color: #f59e0b; }
+.time-chip.selected { background: #ea580c; color: white; border-color: #ea580c; }
+.time-chip.unavailable { background: #f9fafb; color: #9ca3af; border-color: #e5e7eb; cursor: not-allowed; }
+
+.placeholder-msg { padding: 18px 12px; text-align: center; color: #9ca3af; font-size: 13px; }
+
+/* ----- 入力フォーム ----- */
 .input-row { margin-bottom: 12px; }
 .input-row label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
 .input-row input, .input-row textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: white; font-size: 15px; font-family: inherit; }
@@ -75,14 +100,15 @@ main { padding: 20px; max-width: 600px; margin: 0 auto; }
 .success-card .note { font-size: 13px; color: #6b7280; line-height: 1.6; }
 
 .legal-note { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 16px; line-height: 1.5; padding: 0 12px; }
-/* 祝日表示 */
-.date-cell.holiday .day-of-week { color: #dc2626; }
-.date-cell.selected .day-of-week, .date-cell.closed .day-of-week { color: inherit !important; }
-.date-cell .holiday-tag { font-size: 9px; color: #dc2626; line-height: 1.1; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.date-cell.selected .holiday-tag { color: white; }
-.date-cell.closed .holiday-tag { color: #9ca3af; }
+
+.legend { display: flex; gap: 12px; padding: 4px 4px 0; font-size: 11px; color: #6b7280; justify-content: center; }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend .l-mark { font-weight: 700; }
+.legend .l-mark.o { color: #f59e0b; }
+.legend .l-mark.x { color: #9ca3af; }
+.legend .l-mark.b { color: #d1d5db; }
 </style>
-<!-- 国民の祝日判定ライブラリ（attendance / 予約 admin と同バージョン pin） -->
+<!-- 国民の祝日判定ライブラリ -->
 <script src="https://cdn.jsdelivr.net/npm/japanese-holidays@1.0.10/lib/japanese-holidays.js"></script>
 </head>
 <body>
@@ -95,11 +121,9 @@ main { padding: 20px; max-width: 600px; margin: 0 auto; }
 </header>
 
 <div class="steps-bar" id="steps-bar">
-  <div class="step-pill active" data-step="1">日付</div>
-  <div class="step-pill" data-step="2">時刻</div>
-  <div class="step-pill" data-step="3">人数</div>
-  <div class="step-pill" data-step="4">連絡先</div>
-  <div class="step-pill" data-step="5">確認</div>
+  <div class="step-pill active" data-step="1">日時・人数</div>
+  <div class="step-pill" data-step="2">ご連絡先</div>
+  <div class="step-pill" data-step="3">完了</div>
 </div>
 
 <main id="main">
@@ -122,11 +146,12 @@ const FC = {
 };
 const TENANT_ID = 'sawatdee-bros';
 const FB_BASE = FC.databaseURL;
+const MAX_PARTY = 10;
+const MONTHS_AHEAD = 3; // 当月含め前後ナビ可能な範囲
 
 const app = initializeApp(FC);
 const db = getDatabase(app);
 
-// REST API（iOS Safari WebSocketゾンビ化対策）
 async function fbRestGet(path, timeoutMs) {
   if (!timeoutMs) timeoutMs = 10000;
   const ctrl = new AbortController();
@@ -140,10 +165,10 @@ async function fbRestGet(path, timeoutMs) {
 
 // ---- 状態 ----
 let SETTINGS = null;
-let DAY_START_HOUR = 8; // POSのstore_config/day_start_hourを参照
 let step = 1;
-const sel = { date: null, slot: null, party: null, name: '', phone: '', email: '', note: '' };
-let dayBookings = {};   // {date: [{time_slot, status}, ...]}
+const sel = { date: null, party: 2, start: null, name: '', phone: '', email: '', note: '' };
+let calMonth = null; // {year, month}（0始まり）
+let dayBookings = {}; // {YYYY-MM-DD: [{start_time, end_time, party_size, status}, ...]}
 let confirmedNo = null;
 
 const $main = document.getElementById('content');
@@ -159,11 +184,18 @@ function setStep(n) {
   render();
 }
 
-function fmtDateLabel(d) {
+function fmtDate(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+function parseDate(s) { return new Date(s + 'T00:00:00'); }
+function todayStart() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function hhmmToMin(s) { const [h, m] = s.split(':').map(Number); return h*60 + m; }
+function minToHhmm(m) {
+  const h = Math.floor(m / 60), mm = m % 60;
+  return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+}
 
-// 国民の祝日判定（attendance / 予約 admin と同実装・japanese-holidays ライブラリ計算）
+// 国民の祝日
 const _holidayCache = {};
 function getHoliday(ymdStr) {
   if (ymdStr in _holidayCache) return _holidayCache[ymdStr];
@@ -174,185 +206,308 @@ function getHoliday(ymdStr) {
   return _holidayCache[ymdStr];
 }
 
-function getNextDays(n) {
-  const out = [];
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  for (let i = 0; i < n; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    out.push(d);
-  }
-  return out;
-}
-
-function isClosed(dateStr) {
-  if (SETTINGS.closed_dates && SETTINGS.closed_dates.indexOf(dateStr) !== -1) return true;
-  const dow = new Date(dateStr + 'T00:00:00').getDay();
-  if (SETTINGS.closed_dows && SETTINGS.closed_dows.indexOf(dow) !== -1) return true;
+function isClosedDate(dateStr) {
+  if (Array.isArray(SETTINGS.closed_dates) && SETTINGS.closed_dates.indexOf(dateStr) !== -1) return true;
+  const dow = parseDate(dateStr).getDay();
+  if (Array.isArray(SETTINGS.closed_dows) && SETTINGS.closed_dows.indexOf(dow) !== -1) return true;
   return false;
 }
 
-function getSlotsForDate(dateStr) {
-  const dow = new Date(dateStr + 'T00:00:00').getDay();
-  if (SETTINGS.time_slots_by_dow) {
-    const arr = SETTINGS.time_slots_by_dow[String(dow)];
-    return Array.isArray(arr) ? arr : [];
-  }
-  // 旧スキーマ後方互換
-  return Array.isArray(SETTINGS.time_slots) ? SETTINGS.time_slots : [];
+function getRangesForDate(dateStr) {
+  const dow = parseDate(dateStr).getDay();
+  const byDow = SETTINGS.business_hours_by_dow || {};
+  const arr = byDow[String(dow)];
+  return Array.isArray(arr) ? arr : [];
 }
 
-function isSlotPastDeadline(dateStr, slot) {
-  // 当日かつ start時刻 - now < accept_until_minutes_before 分 → 受付不可
+// 営業時間レンジ + 滞在時間 + 刻み から開始時刻スロット配列を生成
+function generateStartTimes(dateStr) {
+  if (isClosedDate(dateStr)) return [];
+  const ranges = getRangesForDate(dateStr);
+  if (ranges.length === 0) return [];
+  const stay = SETTINGS.stay_minutes;
+  const interval = SETTINGS.slot_interval;
+  const out = [];
+  ranges.forEach(r => {
+    const startM = hhmmToMin(r.start);
+    const endM = hhmmToMin(r.end);
+    for (let t = startM; t + stay <= endM; t += interval) {
+      out.push(minToHhmm(t));
+    }
+  });
+  return out;
+}
+
+function isStartPastDeadline(dateStr, startHHMM) {
   const now = new Date();
-  const [h, m] = slot.start.split(':').map(Number);
-  const start = new Date(dateStr + 'T' + slot.start + ':00');
+  const start = new Date(dateStr + 'T' + startHHMM + ':00');
   const diffMin = (start.getTime() - now.getTime()) / 60000;
   return diffMin < (SETTINGS.accept_until_minutes_before || 0);
 }
 
-function slotKey(slot) { return slot.start + '-' + slot.end; }
-
-function bookedCount(dateStr, slot) {
+// 開始時刻 X の予約が他の既存予約と重なって受入容量を超えるか
+function isStartUnavailable(dateStr, startHHMM, partySize) {
+  const stay = SETTINGS.stay_minutes;
+  const xStart = hhmmToMin(startHHMM);
+  const xEnd = xStart + stay;
   const list = dayBookings[dateStr] || [];
-  const k = slotKey(slot);
-  return list.filter(r => r.status !== 'cancelled' && r.time_slot === k).length;
-}
-
-// ---- 描画 ----
-function render() {
-  if (step === 1) renderStep1();
-  else if (step === 2) renderStep2();
-  else if (step === 3) renderStep3();
-  else if (step === 4) renderStep4();
-  else if (step === 5) renderStep5();
-  else if (step === 6) renderDone();
-  window.scrollTo(0, 0);
-}
-
-function renderStep1() {
-  const days = getNextDays(30);
-  let html = '<div class="card"><h2>📅 日付を選ぶ</h2><div class="desc">本日から30日先まで予約可能</div><div class="date-grid">';
-  days.forEach(d => {
-    const ds = fmtDateLabel(d);
-    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
-    const closed = isClosed(ds);
-    const holiday = getHoliday(ds);
-    const cls = ['date-cell'];
-    // 表示色優先度: 休業 > 祝日 > 日 > 土
-    if (closed) cls.push('closed');
-    else if (holiday) cls.push('holiday');
-    else if (d.getDay() === 0) cls.push('sun');
-    else if (d.getDay() === 6) cls.push('sat');
-    if (sel.date === ds) cls.push('selected');
-    html += '<div class="' + cls.join(' ') + '" data-d="' + ds + '" ' + (closed ? '' : 'data-pick="1"') + '>'
-      + '<div class="day-of-week">' + dow + '</div>'
-      + '<div class="day">' + d.getDate() + '</div>'
-      + '<div class="month">' + (d.getMonth()+1) + '月</div>'
-      + (closed ? '<div class="month" style="margin-top:4px">休業</div>' : '')
-      + (holiday && !closed ? '<div class="holiday-tag" title="' + holiday + '">' + holiday + '</div>' : '')
-      + '</div>';
+  let overlapTables = 0;
+  let overlapSeats = 0;
+  list.forEach(b => {
+    if (b.status === 'cancelled') return;
+    if (!b.start_time) return;
+    const bStart = hhmmToMin(b.start_time);
+    const bEnd = bStart + (b.stay_minutes || stay);
+    if (xStart < bEnd && bStart < xEnd) {
+      overlapTables += 1;
+      overlapSeats += (b.party_size || 1);
+    }
   });
-  html += '</div></div>';
-  $main.innerHTML = html;
-  $main.querySelectorAll('[data-pick]').forEach(el => {
-    el.addEventListener('click', async () => {
-      sel.date = el.dataset.d;
-      sel.slot = null;
-      await loadDayBookings(sel.date);
-      setStep(2);
-    });
-  });
+  const mode = SETTINGS.capacity_mode || 'tables';
+  const cap = SETTINGS.capacity || 1;
+  if (mode === 'tables') {
+    return (overlapTables + 1) > cap;
+  } else {
+    return (overlapSeats + (partySize || 1)) > cap;
+  }
 }
 
-async function loadDayBookings(dateStr) {
-  if (dayBookings[dateStr]) return;
-  $loading.style.display = 'block';
-  $main.style.display = 'none';
+// 日付ごとの「いずれかの開始時刻が予約可能か」判定
+function getDateAvailability(dateStr) {
+  // 過去日
+  const today = todayStart();
+  const d = parseDate(dateStr);
+  if (d < today) return 'past';
+  if (isClosedDate(dateStr)) return 'closed';
+  const ranges = getRangesForDate(dateStr);
+  if (ranges.length === 0) return 'no-biz';
+  const starts = generateStartTimes(dateStr);
+  if (starts.length === 0) return 'no-biz';
+  // 全スロット期限切れ
+  const validStarts = starts.filter(s => !isStartPastDeadline(dateStr, s));
+  if (validStarts.length === 0) return 'past-deadline';
+  // 在庫判定（人数は最小1名で判定 = 1人でも入れる枠があるか）
+  const partyForCheck = sel.party || 1;
+  const anyOpen = validStarts.some(s => !isStartUnavailable(dateStr, s, partyForCheck));
+  return anyOpen ? 'open' : 'full';
+}
+
+// ---- データ取得 ----
+async function loadDayBookings(dateStr, refresh) {
+  if (dayBookings[dateStr] && !refresh) return;
   try {
     const data = await fbRestGet('tenants/' + TENANT_ID + '/reservations/' + dateStr);
     const list = [];
     if (data) {
       Object.keys(data).forEach(k => {
         const r = data[k];
-        list.push({ time_slot: r.time_slot, status: r.status });
+        list.push({
+          start_time: r.start_time,
+          stay_minutes: r.stay_minutes,
+          party_size: r.party_size,
+          status: r.status
+        });
       });
     }
     dayBookings[dateStr] = list;
   } catch (e) {
     dayBookings[dateStr] = [];
+  }
+}
+
+// 表示中の月の全日付の予約データを並列取得
+async function loadMonthBookings(year, month) {
+  const last = new Date(year, month + 1, 0).getDate();
+  const targets = [];
+  const today = todayStart();
+  for (let d = 1; d <= last; d++) {
+    const date = new Date(year, month, d);
+    if (date < today) continue;
+    const ds = fmtDate(date);
+    if (dayBookings[ds]) continue;
+    targets.push(ds);
+  }
+  if (targets.length === 0) return;
+  await Promise.all(targets.map(ds => loadDayBookings(ds)));
+}
+
+// ---- 描画 ----
+function render() {
+  if (step === 1) renderStep1();
+  else if (step === 2) renderStep2();
+  else if (step === 3) renderDone();
+  window.scrollTo(0, 0);
+}
+
+function renderStep1() {
+  $main.innerHTML = '<div id="cal-card" class="card"></div>'
+    + '<div id="party-card" class="card"></div>'
+    + '<div id="time-card" class="card"></div>'
+    + '<div id="cta-area"></div>';
+  renderCalendar();
+  renderParty();
+  renderTime();
+  renderCta();
+}
+
+function renderCalendar() {
+  const c = document.getElementById('cal-card');
+  const { year, month } = calMonth;
+  const today = todayStart();
+  const thisMonth = today.getFullYear() * 12 + today.getMonth();
+  const currentMonth = year * 12 + month;
+  const canPrev = currentMonth > thisMonth;
+  const canNext = currentMonth < thisMonth + MONTHS_AHEAD - 1;
+  let html = '<div class="month-nav">'
+    + '<button id="prev-month" ' + (canPrev ? '' : 'disabled') + '>‹</button>'
+    + '<div class="month-label">' + year + '年' + (month+1) + '月</div>'
+    + '<button id="next-month" ' + (canNext ? '' : 'disabled') + '>›</button>'
+    + '</div>';
+  html += '<div class="cal-head">'
+    + '<div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>'
+    + '</div>';
+  html += '<div class="cal-grid">';
+  const first = new Date(year, month, 1);
+  const firstDow = first.getDay();
+  for (let i = 0; i < firstDow; i++) html += '<div class="cal-cell empty"></div>';
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= lastDay; d++) {
+    const date = new Date(year, month, d);
+    const ds = fmtDate(date);
+    const dow = date.getDay();
+    const avail = getDateAvailability(ds);
+    const holiday = getHoliday(ds);
+    const cls = ['cal-cell'];
+    let mark = '';
+    if (avail === 'past') { cls.push('past'); mark = '<div class="mark-bar">─</div>'; }
+    else if (avail === 'closed') { cls.push('closed'); mark = '<div class="mark-bar">休</div>'; }
+    else if (avail === 'no-biz') { cls.push('no-biz'); mark = '<div class="mark-bar">─</div>'; }
+    else if (avail === 'past-deadline') { cls.push('closed'); mark = '<div class="mark-bar">─</div>'; }
+    else if (avail === 'full') { mark = '<div class="mark-x">×</div>'; }
+    else { mark = '<div class="mark-circle">○</div>'; }
+    if (dow === 0) cls.push('sun');
+    else if (dow === 6) cls.push('sat');
+    if (holiday && avail !== 'closed' && avail !== 'no-biz' && avail !== 'past') cls.push('holiday');
+    if (sel.date === ds) cls.push('selected');
+    const pickable = (avail === 'open' || avail === 'full');
+    html += '<div class="' + cls.join(' ') + '"'
+      + (pickable ? ' data-pick="' + ds + '"' : '')
+      + '>'
+      + '<div class="day-num">' + d + '</div>'
+      + mark
+      + (holiday ? '<div class="holiday-tag" title="' + holiday + '">' + holiday.slice(0, 4) + '</div>' : '')
+      + '</div>';
+  }
+  html += '</div>';
+  html += '<div class="legend"><span><span class="l-mark o">○</span>空き</span><span><span class="l-mark x">×</span>満席</span><span><span class="l-mark b">─</span>休業/対象外</span></div>';
+  c.innerHTML = html;
+  document.getElementById('prev-month').onclick = () => { gotoMonth(-1); };
+  document.getElementById('next-month').onclick = () => { gotoMonth(1); };
+  c.querySelectorAll('[data-pick]').forEach(el => {
+    el.addEventListener('click', () => {
+      sel.date = el.dataset.pick;
+      sel.start = null;
+      renderCalendar();
+      renderTime();
+      renderCta();
+    });
+  });
+}
+
+async function gotoMonth(delta) {
+  const m = new Date(calMonth.year, calMonth.month + delta, 1);
+  calMonth = { year: m.getFullYear(), month: m.getMonth() };
+  $loading.style.display = 'block';
+  $main.style.display = 'none';
+  try {
+    await loadMonthBookings(calMonth.year, calMonth.month);
   } finally {
     $loading.style.display = 'none';
     $main.style.display = 'block';
   }
+  render();
 }
 
-function renderStep2() {
-  const slots = getSlotsForDate(sel.date);
-  let html = '<div class="card"><h2>🕒 時刻を選ぶ</h2><div class="desc">'
-    + sel.date + ' のご来店時刻</div>';
-  if (slots.length === 0) {
-    html += '<div class="error">この日は予約枠が設定されていません。別の日をお選びください。</div></div>';
-    html += '<button class="cta secondary" onclick="window.__back(1)">← 日付に戻る</button>';
-    $main.innerHTML = html;
-    return;
+function renderParty() {
+  const c = document.getElementById('party-card');
+  let html = '<div class="card-title">👥 人数</div><div class="scroll-row">';
+  for (let p = 1; p <= MAX_PARTY; p++) {
+    const cls = ['chip'];
+    if (sel.party === p) cls.push('selected');
+    html += '<button class="' + cls.join(' ') + '" data-p="' + p + '">' + p + '名</button>';
   }
-  html += '<div class="slot-grid">';
-  slots.forEach(s => {
-    const cap = s.capacity;
-    const used = bookedCount(sel.date, s);
-    const remain = cap - used;
-    const past = isSlotPastDeadline(sel.date, s);
-    const full = remain <= 0;
-    const cls = ['slot-cell'];
-    if (sel.slot && slotKey(sel.slot) === slotKey(s)) cls.push('selected');
-    if (full) cls.push('full');
-    if (past) cls.push('closed');
-    const disabled = full || past;
-    let status;
-    if (past) status = '受付終了';
-    else if (full) status = '満席';
-    else if (remain === 1) status = '残り1組';
-    else status = '空きあり';
-    html += '<div class="' + cls.join(' ') + '" ' + (disabled ? '' : 'data-pick="' + s.start + '|' + s.end + '|' + s.capacity + '"') + '>'
-      + '<div class="slot-time">' + s.start + ' – ' + s.end + '</div>'
-      + '<div class="slot-status">' + status + '</div>'
-      + '</div>';
-  });
-  html += '</div></div>';
-  html += '<button class="cta secondary" onclick="window.__back(1)">← 日付に戻る</button>';
-  $main.innerHTML = html;
-  $main.querySelectorAll('[data-pick]').forEach(el => {
-    el.addEventListener('click', () => {
-      const [start, end, capacity] = el.dataset.pick.split('|');
-      sel.slot = { start, end, capacity: parseInt(capacity) };
-      setStep(3);
-    });
-  });
-}
-
-function renderStep3() {
-  let html = '<div class="card"><h2>👥 人数</h2><div class="desc">合計人数を選択</div><div class="party-grid">';
-  for (let i = 1; i <= 10; i++) {
-    const cls = ['party-cell'];
-    if (sel.party === i) cls.push('selected');
-    html += '<div class="' + cls.join(' ') + '" data-p="' + i + '">' + i + '名</div>';
-  }
-  html += '</div></div>';
-  html += '<button class="cta secondary" onclick="window.__back(2)">← 時刻に戻る</button>';
-  $main.innerHTML = html;
-  $main.querySelectorAll('[data-p]').forEach(el => {
+  html += '</div>';
+  c.innerHTML = html;
+  c.querySelectorAll('[data-p]').forEach(el => {
     el.addEventListener('click', () => {
       sel.party = parseInt(el.dataset.p);
-      setStep(4);
+      sel.start = null;
+      renderCalendar();
+      renderParty();
+      renderTime();
+      renderCta();
     });
   });
 }
 
-function renderStep4() {
+function renderTime() {
+  const c = document.getElementById('time-card');
+  if (!sel.date) {
+    c.innerHTML = '<div class="card-title">🕒 時間</div><div class="placeholder-msg">先に日付を選んでください</div>';
+    return;
+  }
+  const starts = generateStartTimes(sel.date);
+  if (starts.length === 0) {
+    c.innerHTML = '<div class="card-title">🕒 時間</div><div class="placeholder-msg">この日は営業時間外です</div>';
+    return;
+  }
+  let html = '<div class="card-title">🕒 時間 <span class="pick-label">' + sel.date + '</span></div><div class="scroll-row">';
+  let availableCount = 0;
+  starts.forEach(s => {
+    const past = isStartPastDeadline(sel.date, s);
+    const full = isStartUnavailable(sel.date, s, sel.party);
+    const cls = ['chip', 'time-chip'];
+    if (past || full) cls.push('unavailable');
+    if (sel.start === s) cls.push('selected');
+    if (!past && !full) availableCount++;
+    html += '<button class="' + cls.join(' ') + '" ' + (past || full ? '' : 'data-t="' + s + '"') + '>' + s + '</button>';
+  });
+  html += '</div>';
+  if (availableCount === 0) {
+    html += '<div class="placeholder-msg">この日は満席または受付終了です。別の日をお選びください。</div>';
+  }
+  c.innerHTML = html;
+  c.querySelectorAll('[data-t]').forEach(el => {
+    el.addEventListener('click', () => {
+      sel.start = el.dataset.t;
+      renderTime();
+      renderCta();
+    });
+  });
+}
+
+function renderCta() {
+  const c = document.getElementById('cta-area');
+  const ready = sel.date && sel.party && sel.start;
+  c.innerHTML = '<button class="cta" ' + (ready ? '' : 'disabled') + ' onclick="window.__toContact()">ご連絡先入力へ →</button>';
+}
+
+window.__toContact = function() {
+  if (!sel.date || !sel.party || !sel.start) return;
+  setStep(2);
+};
+
+function renderStep2() {
   const storePhone = (SETTINGS.store_info && SETTINGS.store_info.phone) ? SETTINGS.store_info.phone : '';
-  let html = '<div class="card"><h2>📝 連絡先</h2>'
+  const endTime = minToHhmm(hhmmToMin(sel.start) + SETTINGS.stay_minutes);
+  let html = '<div class="card">'
+    + '<div class="card-title">✅ ご予約内容</div>'
+    + '<div class="summary-row"><div class="summary-label">日付</div><div class="summary-value">' + sel.date + '</div></div>'
+    + '<div class="summary-row"><div class="summary-label">時刻</div><div class="summary-value">' + sel.start + '（〜' + endTime + '頃）</div></div>'
+    + '<div class="summary-row"><div class="summary-label">人数</div><div class="summary-value">' + sel.party + '名</div></div>'
+    + '</div>'
+    + '<div class="card">'
+    + '<div class="card-title">📝 ご連絡先</div>'
     + '<div class="input-row"><label>お名前<span class="req">*</span></label>'
     + '<input id="in-name" type="text" placeholder="山田 太郎" value="' + escAttr(sel.name) + '" autocomplete="name"></div>'
     + '<div class="input-row"><label>電話番号<span class="req">*</span></label>'
@@ -365,76 +520,46 @@ function renderStep4() {
     + '<div class="input-row"><label>ご要望（任意）</label>'
     + '<textarea id="in-note" placeholder="アレルギー・お祝い等">' + escHtml(sel.note) + '</textarea></div>'
     + '<div id="form-error"></div>'
-    + '<button class="cta" onclick="window.__toConfirm()">確認画面へ →</button>'
-    + '</div>';
-  html += '<button class="cta secondary" onclick="window.__back(3)">← 人数に戻る</button>';
-  $main.innerHTML = html;
-}
-
-function renderStep5() {
-  let html = '<div class="card"><h2>✅ 内容確認</h2>'
-    + '<div class="summary-row"><div class="summary-label">日付</div><div class="summary-value">' + sel.date + '</div></div>'
-    + '<div class="summary-row"><div class="summary-label">時刻</div><div class="summary-value">' + sel.slot.start + ' – ' + sel.slot.end + '</div></div>'
-    + '<div class="summary-row"><div class="summary-label">人数</div><div class="summary-value">' + sel.party + '名</div></div>'
-    + '<div class="summary-row"><div class="summary-label">お名前</div><div class="summary-value">' + escHtml(sel.name) + '</div></div>'
-    + '<div class="summary-row"><div class="summary-label">電話</div><div class="summary-value">' + escHtml(sel.phone) + '</div></div>'
-    + '<div class="summary-row"><div class="summary-label">メール</div><div class="summary-value">' + escHtml(sel.email) + '</div></div>'
-    + (sel.note ? '<div class="summary-row"><div class="summary-label">要望</div><div class="summary-value">' + escHtml(sel.note) + '</div></div>' : '')
-    + '<div id="form-error" style="margin-top:12px"></div>'
-    + '<button class="cta" id="confirm-btn" style="margin-top:14px" onclick="window.__submit()">この内容で予約する</button>'
+    + '<button class="cta" id="confirm-btn" onclick="window.__submit()">この内容で予約する</button>'
     + '</div>'
-    + '<button class="cta secondary" onclick="window.__back(4)">← 連絡先に戻る</button>'
+    + '<button class="cta secondary" onclick="window.__back()">← 戻る</button>'
     + '<div class="legal-note">予約確定後、お店から確認連絡が入る場合があります。<br>予約変更・キャンセルはお電話でお願いします。</div>';
   $main.innerHTML = html;
 }
 
-function renderDone() {
-  const html = '<div class="success-card">'
-    + '<div class="success-icon">🎉</div>'
-    + '<h2>ご予約を承りました</h2>'
-    + '<div class="note">' + sel.date + ' ' + sel.slot.start + ' / ' + sel.party + '名様</div>'
-    + '<div class="reservation-no">予約番号: ' + confirmedNo + '</div>'
-    + '<div class="note">店舗からの確認連絡があるまで「仮予約」となります。<br>変更・キャンセルはお電話でご連絡ください。</div>'
-    + '</div>';
-  $main.innerHTML = html;
-  document.querySelectorAll('.step-pill').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.step-pill').forEach(el => el.classList.add('done'));
-}
+window.__back = () => setStep(1);
 
-function escHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function escAttr(s) { return escHtml(s); }
-
-window.__back = (n) => setStep(n);
-window.__toConfirm = () => {
+window.__submit = async function() {
+  const btn = document.getElementById('confirm-btn');
+  const err = document.getElementById('form-error');
   const name = document.getElementById('in-name').value.trim();
   const phone = document.getElementById('in-phone').value.trim();
   const email = document.getElementById('in-email').value.trim();
   const note = document.getElementById('in-note').value.trim();
-  const err = document.getElementById('form-error');
+  err.innerHTML = '';
   if (!name) { err.innerHTML = '<div class="error">お名前を入力してください</div>'; return; }
   if (name.length > 50) { err.innerHTML = '<div class="error">お名前は50文字以内で入力してください</div>'; return; }
   if (!phone || !/^[0-9\-+\s()]{8,}$/.test(phone) || phone.length > 30) { err.innerHTML = '<div class="error">電話番号を正しく入力してください</div>'; return; }
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) { err.innerHTML = '<div class="error">メールアドレスを正しく入力してください</div>'; return; }
   if (note.length > 500) { err.innerHTML = '<div class="error">ご要望は500文字以内で入力してください</div>'; return; }
   sel.name = name; sel.phone = phone; sel.email = email; sel.note = note;
-  setStep(5);
-};
-
-window.__submit = async () => {
-  const btn = document.getElementById('confirm-btn');
-  const err = document.getElementById('form-error');
   btn.disabled = true; btn.textContent = '送信中...';
   try {
-    // 直前再チェック：満席/期限を再確認
-    await loadDayBookingsRefresh(sel.date);
-    if (isSlotPastDeadline(sel.date, sel.slot)) throw new Error('受付期限を過ぎました。別の時刻をお選びください。');
-    if (bookedCount(sel.date, sel.slot) >= sel.slot.capacity) throw new Error('この時刻はちょうど満席になりました。別の時刻をお選びください。');
+    // 直前再チェック
+    await loadDayBookings(sel.date, true);
+    if (isStartPastDeadline(sel.date, sel.start)) throw new Error('受付期限を過ぎました。別の時刻をお選びください。');
+    if (isStartUnavailable(sel.date, sel.start, sel.party)) throw new Error('この時刻はちょうど満席になりました。別の時刻をお選びください。');
 
     const node = push(ref(db, 'tenants/' + TENANT_ID + '/reservations/' + sel.date));
     const id = node.key;
+    const stay = SETTINGS.stay_minutes;
+    const endTime = minToHhmm(hhmmToMin(sel.start) + stay);
     const payload = {
       date: sel.date,
-      time_slot: slotKey(sel.slot),
+      start_time: sel.start,
+      end_time: endTime,
+      time_slot: sel.start + '-' + endTime,
+      stay_minutes: stay,
       party_size: sel.party,
       name: sel.name,
       phone: sel.phone,
@@ -446,32 +571,47 @@ window.__submit = async () => {
     Object.keys(payload).forEach(k => { if (payload[k] === null) delete payload[k]; });
     await set(node, payload);
     confirmedNo = id.slice(-6).toUpperCase();
-    setStep(6);
+    setStep(3);
   } catch (e) {
     err.innerHTML = '<div class="error">' + escHtml(e.message) + '</div>';
     btn.disabled = false; btn.textContent = 'この内容で予約する';
   }
 };
 
-async function loadDayBookingsRefresh(dateStr) {
-  delete dayBookings[dateStr];
-  await loadDayBookings(dateStr);
+function renderDone() {
+  const endTime = minToHhmm(hhmmToMin(sel.start) + SETTINGS.stay_minutes);
+  const html = '<div class="success-card">'
+    + '<div class="success-icon">🎉</div>'
+    + '<h2>ご予約を承りました</h2>'
+    + '<div class="note">' + sel.date + ' ' + sel.start + '〜' + endTime + ' / ' + sel.party + '名様</div>'
+    + '<div class="reservation-no">予約番号: ' + confirmedNo + '</div>'
+    + '<div class="note">店舗からの確認連絡があるまで「仮予約」となります。<br>変更・キャンセルはお電話でご連絡ください。</div>'
+    + '</div>';
+  $main.innerHTML = html;
+  document.querySelectorAll('.step-pill').forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
 }
+
+function escHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escAttr(s) { return escHtml(s); }
 
 (async function init() {
   try {
-    const [settings, dayStart] = await Promise.all([
-      fbRestGet('tenants/' + TENANT_ID + '/reservation_settings'),
-      fbRestGet('store_config/day_start_hour')
-    ]);
-    const hasNew = settings && settings.time_slots_by_dow;
-    const hasLegacy = settings && Array.isArray(settings.time_slots);
-    if (!hasNew && !hasLegacy) {
+    const settings = await fbRestGet('tenants/' + TENANT_ID + '/reservation_settings');
+    if (!settings || !settings.business_hours_by_dow) {
       $loading.innerHTML = '<div class="error">予約受付の設定がまだ完了していません。<br>店舗にお電話でお問い合わせください。</div>';
       return;
     }
     SETTINGS = settings;
-    if (typeof dayStart === 'number') DAY_START_HOUR = dayStart;
+    if (!SETTINGS.stay_minutes) SETTINGS.stay_minutes = 120;
+    if (!SETTINGS.slot_interval) SETTINGS.slot_interval = 15;
+    if (!SETTINGS.capacity) SETTINGS.capacity = 4;
+    if (!SETTINGS.capacity_mode) SETTINGS.capacity_mode = 'tables';
+    if (typeof SETTINGS.accept_until_minutes_before !== 'number') SETTINGS.accept_until_minutes_before = 60;
+
+    const today = todayStart();
+    calMonth = { year: today.getFullYear(), month: today.getMonth() };
+    await loadMonthBookings(calMonth.year, calMonth.month);
+
     $loading.style.display = 'none';
     $main.style.display = 'block';
     setStep(1);
