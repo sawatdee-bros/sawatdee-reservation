@@ -225,16 +225,16 @@ select.field-input { padding-right: 26px; }
       <div class="field-row">
         <div class="field-label">
           電話番号
-          <div class="field-sub">承認メールの末尾に表示</div>
+          <div class="field-sub">POS の店舗設定で管理。承認メール末尾に表示</div>
         </div>
-        <input id="store-phone" class="field-input" type="tel" placeholder="044-777-6759" style="width:180px">
+        <input id="store-phone" class="field-input" type="tel" placeholder="POS で未設定" style="width:180px" readonly>
       </div>
       <div class="field-row">
         <div class="field-label">
           住所
-          <div class="field-sub">承認メールの末尾に表示</div>
+          <div class="field-sub">POS の店舗設定で管理。承認メール末尾に表示</div>
         </div>
-        <input id="store-address" class="field-input" type="text" placeholder="神奈川県川崎市中原区上小田中5-3-10" style="flex:1;min-width:0">
+        <input id="store-address" class="field-input" type="text" placeholder="POS で未設定" style="flex:1;min-width:0" readonly>
       </div>
       <div class="field-row">
         <div class="field-label">
@@ -243,7 +243,7 @@ select.field-input { padding-right: 26px; }
         </div>
         <input id="store-reply-email" class="field-input" type="email" placeholder="（任意）" style="width:240px">
       </div>
-      <div class="note">店名はPOSの <code>store_config/store_name</code> から取得（重複登録回避のためここでは持たない）。</div>
+      <div class="note">店名・電話・住所は POS の <code>store_config</code> で一元管理（ここでは編集不可）。返信用メールアドレスのみ予約システム固有のためここで設定します。</div>
     </div>
   </div>
 
@@ -566,12 +566,11 @@ window.saveAll = async function() {
     state.max_seats = maxSeatsRaw === '' ? null : Math.max(1, parseInt(maxSeatsRaw) || 1);
     state.stay_minutes = parseInt(document.getElementById('stay-minutes').value) || 120;
     state.slot_interval = parseInt(document.getElementById('slot-interval').value) || 15;
-    state.store_info = {
-      phone: (document.getElementById('store-phone').value || '').trim(),
-      address: (document.getElementById('store-address').value || '').trim(),
-      reply_email: (document.getElementById('store-reply-email').value || '').trim()
-    };
-    Object.keys(state.store_info).forEach(k => { if (!state.store_info[k]) delete state.store_info[k]; });
+    // phone/address は POS 側 store_config で管理。GAS 互換のため既存値を温存しつつ reply_email のみ更新
+    state.store_info.reply_email = (document.getElementById('store-reply-email').value || '').trim();
+    if (!state.store_info.reply_email) delete state.store_info.reply_email;
+    if (!state.store_info.phone) delete state.store_info.phone;
+    if (!state.store_info.address) delete state.store_info.address;
     state.email_endpoint = (document.getElementById('email-endpoint').value || '').trim();
     if (state.email_endpoint && !/^https:\/\/script\.google\.com\//.test(state.email_endpoint)) {
       throw new Error('GAS Web App URL の形式が不正（https://script.google.com/ で始まる必要あり）');
@@ -633,12 +632,14 @@ window.saveAll = async function() {
 
 (async function init() {
   try {
-    const [snap, coursesSnap] = await Promise.all([
+    const [snap, coursesSnap, storeSnap] = await Promise.all([
       get(ref(db, SETTINGS_PATH)),
-      get(ref(db, COURSES_PATH))
+      get(ref(db, COURSES_PATH)),
+      get(ref(db, 'store_config'))
     ]);
     const cfg = snap.val();
     const coursesData = coursesSnap.val() || {};
+    const storeCfg = storeSnap.val() || {};
     courses = Object.keys(coursesData).map(id => ({
       id,
       name: coursesData[id].name || '',
@@ -684,8 +685,9 @@ window.saveAll = async function() {
     document.getElementById('max-seats').value = state.max_seats == null ? '' : state.max_seats;
     document.getElementById('stay-minutes').value = state.stay_minutes;
     document.getElementById('slot-interval').value = state.slot_interval;
-    document.getElementById('store-phone').value = state.store_info.phone || '';
-    document.getElementById('store-address').value = state.store_info.address || '';
+    // phone/address は POS 側 store_config を表示（編集は POS の店舗設定で）
+    document.getElementById('store-phone').value = storeCfg.store_phone || '';
+    document.getElementById('store-address').value = storeCfg.store_address || '';
     document.getElementById('store-reply-email').value = state.store_info.reply_email || '';
     document.getElementById('email-endpoint').value = state.email_endpoint || '';
     const firstOpen = DOWS.find(d => !isClosedDow(d.key));

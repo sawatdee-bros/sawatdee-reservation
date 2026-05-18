@@ -719,15 +719,23 @@ function escAttr(s) { return escHtml(s); }
 
 (async function init() {
   try {
-    const [settings, coursesData] = await Promise.all([
+    const [settings, coursesData, storeCfg] = await Promise.all([
       fbRestGet('tenants/' + TENANT_ID + '/reservation_settings'),
-      fbRestGet('tenants/' + TENANT_ID + '/courses')
+      fbRestGet('tenants/' + TENANT_ID + '/courses'),
+      fbRestGet('store_config')
     ]);
     if (!settings || !settings.business_hours_by_dow) {
       $loading.innerHTML = '<div class="error">予約受付の設定がまだ完了していません。<br>店舗にお電話でお問い合わせください。</div>';
       return;
     }
     SETTINGS = settings;
+    // 店舗連絡先は POS 側 store_config を優先（無ければ予約側 store_info にフォールバック）
+    if (storeCfg && (storeCfg.store_phone || storeCfg.store_address)) {
+      SETTINGS.store_info = Object.assign({}, SETTINGS.store_info || {}, {
+        phone: storeCfg.store_phone || (SETTINGS.store_info && SETTINGS.store_info.phone) || '',
+        address: storeCfg.store_address || (SETTINGS.store_info && SETTINGS.store_info.address) || ''
+      });
+    }
     if (coursesData && typeof coursesData === 'object') {
       COURSES = Object.keys(coursesData)
         .map(id => Object.assign({ id }, coursesData[id]))

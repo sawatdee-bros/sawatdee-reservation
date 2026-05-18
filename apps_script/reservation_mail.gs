@@ -14,10 +14,10 @@
  * SaaS 化時に Firebase reservation_settings/email_template への移行検討。
  * 差し込み変数（店名・電話・予約日時等）と本文の境界を明確に保つこと（移行容易化のため）。
  *
- * 【店名の取得元】
- * 店名は POS 側 /store_config/store_name から取得（重複データ回避）。
- * 電話・住所は予約側 /tenants/{tid}/reservation_settings/store_info から取得。
- * 将来 SaaS 化時に store_info を POS store_config に統合する想定。
+ * 【店舗情報の取得元】
+ * 店名・電話・住所は POS 側 /store_config から取得（store_name/store_phone/store_address）。
+ * 旧スキーマ /tenants/{tid}/reservation_settings/store_info.{phone,address} は
+ * 移行期間中の fallback。POS で一度保存されれば store_config 側が優先される。
  *
  * 【プロジェクト管理】
  * このスクリプトはスタンドアロン GAS プロジェクト「サワディ兄弟 予約メール送信」として
@@ -100,8 +100,10 @@ function doPost(e) {
   }
 
   try {
-    // 店名（POS 共有）と店舗連絡先（予約側）を取得
-    var storeName = fetchJson(FIREBASE_BASE + '/store_config/store_name.json') || 'サワディ兄弟';
+    // 店名・電話・住所は POS の store_config を一元参照（reply_email のみ予約側固有）
+    // 旧スキーマ /tenants/.../reservation_settings/store_info.{phone,address} は
+    // 移行期間中の互換 fallback として残す（一度 POS で保存されれば store_config が優先）
+    var storeCfg = fetchJson(FIREBASE_BASE + '/store_config.json') || {};
     var storeInfo = fetchJson(FIREBASE_BASE + '/tenants/' + encodeURIComponent(payload.tenant_id) + '/reservation_settings/store_info.json') || {};
 
     var ctx = {
@@ -112,9 +114,9 @@ function doPost(e) {
       child_count: (typeof payload.child_count === 'number' && payload.child_count > 0) ? payload.child_count : 0,
       course_name: payload.course_name || '',
       reservation_no: payload.reservation_no,
-      store_name: storeName,
-      store_phone: storeInfo.phone || '',
-      store_address: storeInfo.address || ''
+      store_name: storeCfg.store_name || 'サワディ兄弟',
+      store_phone: storeCfg.store_phone || storeInfo.phone || '',
+      store_address: storeCfg.store_address || storeInfo.address || ''
     };
 
     // メール送信
