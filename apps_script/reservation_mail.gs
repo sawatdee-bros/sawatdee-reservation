@@ -126,7 +126,7 @@ function doPost(e) {
       to: payload.email,
       subject: subject,
       body: body,
-      name: storeName  // From: の表示名
+      name: ctx.store_name  // From: の表示名
     };
     if (storeInfo.reply_email) {
       sendOpts.replyTo = storeInfo.reply_email;
