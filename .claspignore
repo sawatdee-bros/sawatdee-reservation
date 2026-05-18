@@ -1,0 +1,5 @@
+# clasp が push 時に無視するパターン（rootDir=apps_script 相対）
+**/.git/**
+**/.github/**
+**/node_modules/**
+**/*.md
